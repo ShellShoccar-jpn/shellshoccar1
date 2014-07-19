@@ -1,0 +1,17 @@
+# 商品紹介連携サイト(Referer及びCross-Origin_Resource_Sharing)記述ファイル
+# ALLOWED_ORIGIN_LIST.TXT
+#
+# 本システムに属するシェルスクリプトが設定を共通化しなければ
+# システムとして成り立たない設定のみをここに記す。
+#
+# * このファイルに
+#   http://example.com
+#   などのように、買い物カゴを共有したい他サイトのURL(プロトコル～ドメイン
+#   部分)を1行に1サイトずつ記述することができる。
+#
+# * 例えば、上記の http://example.com であれば、http://example.com で始まる
+#   URLのサイト上にカゴ入れボタンを設置することができる。
+#   
+http://example.org/               # 本店
+https://example.org/              # 本店(SSL)
+http://example.co.uk/             # イギリス支部

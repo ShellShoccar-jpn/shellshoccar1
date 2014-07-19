@@ -1,0 +1,126 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+		Usage   : ${0##*/} [-<n>] [-d[<string>]] [num=<n>] <file>
+		Version : Fri Jun 27 03:30:56 JST 2014
+		        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+
+# Initialize
+PATH='/usr/bin:/bin'
+
+# parse the arguments
+n=1
+dopt=' '
+numopt=0
+file=''
+n_is_set=0
+dopt_is_set=0
+numopt_is_set=0
+i=0
+for arg in "$@"; do
+  i=$((i+1))
+  case $arg in
+    -[0-9]*)
+      echo "_${arg#-}" | grep '^_[0-9]\{1,\}$' >/dev/null
+      [ $? -eq 0 ] || print_usage_and_exit
+      if [ $n_is_set -eq 0 ]; then
+        n=${arg#-}
+        n_is_set=1
+        continue
+      fi
+      ;;
+    num=[0-9]*)
+      echo "_${arg#num=}" | grep '^_[0-9]\{1,\}$' >/dev/null
+      [ $? -eq 0 ] || print_usage_and_exit
+      if [ $numopt_is_set -eq 0 ]; then
+        numopt=${arg#num=}
+        numopt_is_set=1
+        continue
+      fi
+      ;;
+    -d*)
+      if [ $dopt_is_set -eq 0 ]; then
+        dopt=${arg#-d}
+        dopt_is_set=1
+        continue
+      fi
+      ;;
+    -h|--help|--version)
+      print_usage_and_exit
+      ;;
+  esac
+  [ $i -eq $# ] || print_usage_and_exit
+  file=$arg
+done
+[ -n "$file" ] || file='-'
+
+# validate the file arguments
+[ $n -gt 0 ] || print_usage_and_exit
+if [ \( ! -r "$file" \) -a \( "_$file" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the file" 1>&2
+  exit 1
+fi
+
+# main
+export v1=$n
+export v2=$numopt
+export v3="$dopt"
+exec awk '
+BEGIN {
+  n   = ENVIRON["v1"];
+  num = ENVIRON["v2"];
+  d   = ENVIRON["v3"];
+  ORS = "";
+  LF  = sprintf("\n");
+}
+{
+  # ===== make the index string ====================================
+  #
+  idx = "";
+  for (i=1; i<=num; i++) {
+    idx = idx $i OFS;
+  }
+
+  # ===== TARRing ==================================================
+  #
+  if (d == FS) {
+    # --- case #1 (without -d option) ------------------------------
+    # 1) extract
+    for (i=1+num; i<=NF; i+=n) {
+      print idx;
+      dlm = "";
+      for (j=i; j<i+n; j++) {
+        print dlm $j;
+        dlm = OFS;
+      }
+      print LF;
+    }
+  } else {
+    # --- case #2 (with -d option) ---------------------------------
+    # 1) split data fields
+    data = $0;
+    for (i=1; i<=num; i++) {
+      data = substr(data,length($i)+1);
+      sub(/^[[:blank:]]+/, "", data);
+    }
+    split(data, fld, d);
+    # 2) extract
+    for (i=1; i<=NF; i+=n) {
+      print idx;
+      dlm = "";
+      for (j=i; j<i+n; j++) {
+        print dlm fld[j];
+        dlm = OFS;
+      }
+      print LF;
+    }
+  }
+}' "$file"

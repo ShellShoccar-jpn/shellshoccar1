@@ -1,0 +1,2 @@
+#商品ID   品名(mojihame escape)       単価 発売日    大きさ    在庫情報体 URL                                       電子版情報
+RPC       恐怖_シェルショッカーの掟   1000 20140817  10mm,300g @          http://richlab.org/coterie/soccar.html    -

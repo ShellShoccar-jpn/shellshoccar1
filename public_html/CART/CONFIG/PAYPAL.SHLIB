@@ -1,0 +1,38 @@
+# システム共通定義ファイル(PayPal関連)
+# PAYPAL.SHLIB
+#
+# 本システムに属するシェルスクリプトが設定を共通化しなければ
+# システムとして成り立たない設定のみをここに記す。
+#
+# * このファイルでは、PayPalに関連するもの(USER IDやその他PayPalシステ
+#   ム関連情報)を定義する。
+# * 単に共通化しておいた方が綺麗というものに関してはここに書かずに
+#   各シェルスクリプトの中に書くこと
+#   (Tmpディレクトリーの定義など)
+
+######################################################################
+# アクセス先URL
+######################################################################
+
+# --- APIのURL -------------------------------------------------------
+readonly PP_URL_API='https://api-3t.sandbox.paypal.com/nvp' # Sandbox用
+
+# --- お客様にPayPal決済をしてもらうための案内先URL ------------------
+readonly PP_URL_SETTLEMENT_BASE='https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout' # Sandbox用
+
+
+######################################################################
+# APIパラメーター
+######################################################################
+
+# --- 販売者のID等 ---------------------------------------------------
+readonly PP_USER='sdk-three_api1.sdk.com'                                        # Sandbox用
+readonly PP_PASSWD='QFZCWN5HZM8VBG7Q'                                            # Sandbox用
+readonly PP_SIGNATURE='A-IzJhZZjhg29XQ2qnhapuwxIDzyAZQ92FRP5dqBzVesOkzbdUONzmOU' # Sandbox用
+
+# --- その他送信パラメーター -----------------------------------------
+readonly PP_VERSION='65.1'                      # 利用するAPIのバージョン
+readonly PP_LOCALECODE='ja_JP'                  # 取引言語
+readonly PP_PAYMENTREQUEST_0_CURRENCYCODE='JPY' # 取引通貨
+readonly PP_SOLUTIONTYPE='Sole'                 # 'Sole'ならアカウント作成不要('Mark'は必須)
+readonly PP_LANDINGPAGE='Billing'               # 'Billing'ならクレカ番号入力がデフォになる('Login'ならID入力がデフォ)

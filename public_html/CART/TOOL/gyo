@@ -1,0 +1,119 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+	Usage   : ${0##*/} [-f] <file> ...
+	Version : Sun Jun 29 14:55:41 JST 2014
+	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+# the alternative of the mktemp command
+which mktemp >/dev/null 2>&1 || {
+  mktemp_fileno=0
+  mktemp() {
+    local mktemp_filename
+    mktemp_filename="/tmp/${0##*/}.$$.$mktemp_fileno"
+    mktemp_fileno=$((mktemp_fileno+1))
+    touch "$mktemp_filename"
+    chmod 600 "$mktemp_filename"
+    echo "$mktemp_filename"
+  }
+}
+
+
+# function for processing a file
+proc_a_file () {
+  local gyo tmpfile reffile 
+
+  # count lines (not adjusted yet)
+  if [ $2 -eq 0 ]; then
+    gyo=$(wc -l "$1" | awk '{print $1}')
+    reffile=$1
+  else
+    tmpfile=$(mktemp -t "${name_of_me}.XXXXXXXX")
+    if [ $? -eq 0 ]; then
+      trap "rm -f $tmpfile; exit"  EXIT HUP INT QUIT PIPE ALRM TERM
+    else
+      echo "${name_of_me}: Cannot create a temporary file" 1>&2
+      exit 1
+    fi
+    gyo=$(tee "$tmpfile" | wc -l | awk '{print $1}')
+    reffile=$tmpfile
+  fi
+  #
+  # adjust the number of lines
+  if [ $(tail -n 1 "$reffile" | wc -l | awk '{print $1}') -eq 0 ]; then
+    if [ -s "$reffile" ]; then
+      gyo=$((gyo+1))
+    fi
+  fi
+  if [ -n "$tmpfile" ]; then
+    rm -f "$tmpfile"
+    trap  EXIT HUP INT QUIT PIPE ALRM TERM
+    tmpfile=''
+  fi
+  #
+  # print the number of lines
+  if [ $foption -eq 0 ]; then
+    echo $gyo
+  else
+    printf '$s %d' "$1" "$gyo"
+  fi
+}
+
+
+# initialize
+PATH='/usr/bin:/bin'
+foption=0
+file=''
+use_stdin=0
+name_of_me=${0##*/}
+
+# parse arguments and count lines
+i=0
+for arg in "$@"; do
+  i=$((i+1))
+  is_stdin=0
+  readonce=0
+  #
+  # parse argument
+  if [ \( $i -eq 1 \) -a \( "_$arg" = '_-f' \) ]; then
+    foption=1
+    continue
+  elif [ \( "_$arg" = '_-'               \) -o \
+         \( "_$arg" = '_/dev/stdin'      \) -o \
+         \( "_$arg" = '_/dev/fd/0'       \) -o \
+         \( "_$arg" = '_/proc/self/fd/0' \)    ]
+  then
+    [ $use_stdin -eq 0 ] || print_usage_and_exit
+    is_stdin=1
+    readonce=1
+    file="$arg"
+  elif [ -f "$arg" ]; then
+    file="$arg"
+  elif [ \( -c "$arg" \) -o \( -p "$arg" \) ]; then
+    file="$arg"
+    readonce=1
+  else
+    print_usage_and_exit
+  fi
+  if [ \( ! -r "$file" \) -a \( "_$file" != '_-' \) ]; then
+    echo "${0##*/}: Cannot open the file \"$arg\"" 1>&2
+    exit 1
+  fi
+  use_stdin=$((use_stdin+is_stdin))
+  #
+  # process a file
+  proc_a_file "$file" $readonce
+done
+
+# process the stdin stream at this point when no filename was given
+if [ -z "$file" ]; then
+  readonce=1
+  proc_a_file '-' $readonce
+fi

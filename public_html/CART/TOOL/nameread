@@ -1,0 +1,181 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+	Usage   : ${0##*/} [-el] [-d<c>] [-i<string>] <name> <name_file>
+	Version : Fri Jun 27 03:03:38 JST 2014
+	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+
+# initialize
+PATH='/usr/bin:/bin'
+dopt=''
+dopt_is_set=0
+iopt=''
+eopt_is_set=0
+lopt_is_set=0
+name=''
+name_file=''
+
+# parse arguments
+[ $# -ge 1 ] || print_usage_and_exit
+optmode=''
+i=0
+for arg in "$@"; do
+  i=$((i+1))
+  if [ -z "$optmode" ]; then
+    case "$arg" in
+      -[deil]*)
+        ret=$(echo "_${arg#-}" |
+              awk '{
+                d = "_";
+                e = "_";
+                i = "_";
+                l = "_";
+                opt_str = "";
+                for (n=2;n<=length($0);n++) {
+                  s = substr($0,n,1);
+                  if (s == "d") {
+                    d = "d";
+                    opt_str = substr($0,n+1);
+                    break;
+                  } else if (s == "e") {
+                    e = "e";
+                  } else if (s == "i") {
+                    i = "i";
+                    opt_str = substr($0,n+1);
+                    break;
+                  } else if (s == "l") {
+                    l = "l";
+                  }
+                }
+                printf("%s%s%s%s %s",d,e,i,l,opt_str);
+              }')
+        ret1=${ret%% *}
+        ret2=${ret#* }
+        if [ "${ret1#*d}" != "$ret1" ]; then
+          dopt_is_set=1
+          if [ -n "$ret2" ]; then
+            dopt=$ret2
+          else
+            dopt=''
+          fi
+        fi
+        if [ "${ret1#*e}" != "$ret1" ]; then
+          eopt_is_set=1
+        fi
+        if [ "${ret1#*i}" != "$ret1" ]; then
+          if [ -n "$ret2" ]; then
+            iopt=$ret2
+          else
+            optmode='i'
+          fi
+        fi
+        if [ "${ret1#*l}" != "$ret1" ]; then
+          lopt_is_set=1
+        fi
+        ;;
+      *)
+        if [ -z "$name" ]; then
+          [ $i -ge $(($#-1)) ] || print_usage_and_exit
+          name=$arg
+        elif [ -z "$name_file" ]; then
+          [ $i -eq $# ] || print_usage_and_exit
+          name_file=$arg
+        else
+          print_usage_and_exit
+        fi
+        ;;
+    esac
+  elif [ "$optmode" = 'i' ]; then
+    iopt=$arg
+    optmode=''
+  else
+    print_usage_and_exit
+  fi
+done
+if [ -z "$name" ]; then
+  print_usage_and_exit
+fi
+if [ -z "$name_file" ]; then
+  name_file='-'
+elif [ \( ! -f "$name_file"     \) -a \
+       \( ! -c "$name_file"     \) -a \
+       \( ! -p "$name_file"     \) -a \
+       \( "_$name_file" != '_-' \)    ]
+then
+  print_usage_and_exit
+fi
+if [ \( ! -r "$name_file" \) -a \( "_$name_file" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the file" 1>&2
+  exit 1
+fi
+
+#
+awk_code='
+BEGIN {
+  dopt        = ENVIRON["v1"];
+  iopt        = ENVIRON["v2"];
+  target_name = ENVIRON["v3"];
+  dopt_is_set = ENVIRON["v4"];
+  lopt_is_set = ENVIRON["v5"];
+  eopt_is_set = ENVIRON["v6"];
+}
+{
+  i = index($0," ");
+  name = (i > 1) ? $1 : (length($0)>0) ? $0 : "";
+  if (eopt_is_set == 0 && name != target_name) {
+    next;
+  }
+  var = (i > 0) ? substr($0,i+1) : "";
+  if (length(var) == 0 && length(iopt)) {
+    var = iopt;
+  } else if (dopt_is_set != 0)  {
+    s = "";
+    while (match(var,/ /)) {
+      s = s substr(var, 1, RSTART-1) dopt;
+      var = substr(var, RSTART+1);
+    }
+    var = s var;
+  }
+  if (lopt_is_set) {
+    print name, var;
+  } else {
+    print var;
+  }
+}
+'
+if [ $eopt_is_set -eq 0 ]; then
+  export v1=$dopt
+  export v2=$iopt
+  export v3=$name
+  export v4=$dopt_is_set
+  export v5=$lopt_is_set
+  export v6=$eopt_is_set
+  exec awk "$awk_code" "$name_file"
+else
+  if [ "_${name#^}" = "_$name" ]; then
+    name="[^[:blank:]]*${name}"
+  else
+    name="${name#^}"
+  fi
+  if [ "_${name%$}" = "_$name" ]; then
+    name="${name}[^[:blank:]]*"
+  else
+    name="${name%$}"
+  fi
+  export v1=$dopt
+  export v2=$iopt
+  export v3=$name
+  export v4=$dopt_is_set
+  export v5=$lopt_is_set
+  export v6=$eopt_is_set
+  grep -E "^${name}([[:blank:]]+.*|)$" "$name_file" |
+  exec awk "$awk_code"
+fi

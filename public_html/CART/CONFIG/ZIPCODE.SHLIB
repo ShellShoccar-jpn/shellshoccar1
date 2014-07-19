@@ -1,0 +1,30 @@
+# システム共通定義ファイル(郵便番号辞書関連)
+# ZIPCODE.SHLIB
+#
+# 本システムに属するシェルスクリプトが設定を共通化しなければ
+# システムとして成り立たない設定のみをここに記す。
+#
+# * このファイルでは、PayPalに関連するもの(USER IDやその他PayPalシステ
+#   ム関連情報)を定義する。
+# * 単に共通化しておいた方が綺麗というものに関してはここに書かずに
+#   各シェルスクリプトの中に書くこと
+#   (Tmpディレクトリーの定義など)
+
+
+######################################################################
+# ファイル・ディレクトリー定義
+######################################################################
+
+readonly File_ZIPDIC_KENALL=$Dir_DATA/ZIPDIC_KENALL.TXT   # 郵便番号辞書ファイル(地域名)
+readonly File_ZIPDIC_JIGYOSYO=$Dir_DATA/ZIPDIC_JIGYOSYO.TXT # 郵便番号辞書ファイル(事業所名)
+
+
+######################################################################
+# その他
+######################################################################
+
+readonly URL_ZIPCSVZIP_KENALL=http://www.post.japanpost.jp/zipcode/dl/oogaki/zip/ken_all.zip
+                                # 日本郵便 郵便番号-住所 CSVデータ (地域名、Zip形式) URL
+readonly URL_ZIPCSVZIP_JIGYOSYO=http://www.post.japanpost.jp/zipcode/dl/jigyosyo/zip/jigyosyo.zip
+                                # 日本郵便 郵便番号-住所 CSVデータ (事業所名、Zip形式) URL
+

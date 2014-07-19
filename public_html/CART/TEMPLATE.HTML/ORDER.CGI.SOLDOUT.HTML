@@ -1,0 +1,28 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+
+<haed>
+<!-- ■１．ヘッダー内
+           ・文字エンコードはUTF-8に設定すること(必須)
+-->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<title>注文受付 ― 在庫切れ</title>
+<script type="text/javascript" src="../HTML/JS/CLIENTBASE.JS"></script>
+<style type="text/css">
+</style>
+</haed>
+
+<body>
+  <p>申し訳ありません。次の商品の在庫が、ご注文数を下回りました。</p>
+  <dl>
+  <!-- INSUFFICIENT_STOCKS
+    <li>%1</li>
+       INSUFFICIENT_STOCKS -->
+  </dl>
+  <p>注文をキャンセルさせていただきました。何卒ご了承ください。</p>
+  <p><input type="button" name="back" value="戻る" onclick="goback_from_cashier();" /><input type="hidden" name="referrer" id="referrer" value="###referrer###" /></p>
+</body>
+
+</html>

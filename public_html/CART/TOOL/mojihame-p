@@ -1,0 +1,120 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+		Usage   : ${0##*/} [-d[<string>]] <template> <data>
+		Version : Fri Jun 27 03:14:11 JST 2014
+		        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+
+
+# Initialize
+PATH='/usr/bin:/bin'
+
+# parse the arguments
+asnull='@'
+file_tmpl=''
+file_data=''
+optmode=''
+i=0
+for arg in "$@"; do
+  i=$((i+1))
+  if [ $i -eq $# ]; then
+    [ -z "$optmode" ] || print_usage_and_exit
+    if [ -n "$file_tmpl" ]; then
+      file_data=$arg
+    else
+      file_tmpl=$arg
+    fi
+    break
+  fi
+  if [ -z "$optmode" ]; then
+    if [ "_$arg" != "_${arg#-d}" ]; then
+      asnull=${arg#-d}
+    elif [ $i -eq $(($#-1)) ]; then
+      file_tmpl=$arg; continue;
+    else
+      print_usage_and_exit
+    fi
+  else
+    print_usage_and_exit
+  fi
+done
+
+# validate the arguments
+[ -n "$file_tmpl" ] || print_usage_and_exit
+[ -n "$file_data" ] || file_data='-'
+use_stdin=0
+for file in "$file_tmpl" "$file_data"; do
+  if [ \( "_$file" = '_-'               \) -o \
+       \( "_$file" = '_/dev/stdin'      \) -o \
+       \( "_$file" = '_/dev/fd/0'       \) -o \
+       \( "_$file" = '_/proc/self/fd/0' \)    ]
+  then
+    use_stdin=$((use_stdin+1))
+  fi
+done
+[ $use_stdin -le 1 ] || print_usage_and_exit
+if [ \( ! -r "$file_tmpl" \) -a \( "_$file_tmpl" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the template file" 1>&2
+  exit 1
+fi
+if [ \( ! -r "$file_data" \) -a \( "_$file_data" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the data file" 1>&2
+  exit 1
+fi
+
+# main
+export v1=$file_tmpl
+export v2=$asnull
+exec awk '
+BEGIN {
+  # ===== Initalize ==================================================
+  #
+  OFS="";
+  ORS="";
+  TAB = sprintf("\t");
+  LF  = sprintf("\n");
+  split("", data_buf);
+  file_tmpl = (ENVIRON["v1"]!="-") ? ENVIRON["v1"] : "/dev/stdin";
+  asnull    = ENVIRON["v2"];
+
+  # ===== memorize the all fields ====================================
+  #
+  field_num=0;
+  while (getline) {
+    for (i=1; i<=NF; i++) {
+      field_num++;
+      s = $i;
+      if (s == asnull) {
+        s = "";
+      } else {
+        gsub(/\\_/, TAB, s);
+        gsub(/_/  , " ", s);
+        gsub(/\t/ , "_", s);
+      }
+      data_buf[field_num] = s;
+    }
+  }
+
+  # ===== mojihame the field data to the template file ===============
+  #
+  while (getline line < file_tmpl) {
+    #
+    # --- scan the all of "%n" in a line -----------------------------
+    while (match(line,/%[0-9]+/)) {
+      print substr(line, 1, RSTART-1);
+      fieldnum = substr(line, RSTART+1, RLENGTH-1);
+      print (fieldnum in data_buf) ? data_buf[fieldnum] : "%" fieldnum;
+      line = substr(line, RSTART+RLENGTH);
+    }
+    print line, LF;
+  }
+}
+' "$file_data"

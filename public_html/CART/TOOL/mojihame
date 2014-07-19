@@ -1,0 +1,98 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+		Usage   : ${0##*/} [-d[<string>]] <template> <data>
+		        : ${0##*/} -l<label> [-d[<string>]] <template> <data>
+		        : ${0##*/} -h<label> [-d[<string>]] <template> <data>
+		Version : Fri Apr 11 15:52:47 JST 2014
+		        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+
+# Initialize
+PATH='/usr/bin:/bin'
+
+# parse the arguments
+mode='p' # "p" (default) or "r" or "l" or "h"
+label=''
+asnull='@'
+file_tmpl=''
+file_data=''
+optmode=''
+i=0
+for arg in "$@"; do
+  i=$((i+1))
+  if [ $i -eq $# ]; then
+    [ -z "$optmode" ] || print_usage_and_exit
+    if [ -n "$file_tmpl" ]; then
+      file_data=$arg
+    else
+      file_tmpl=$arg
+    fi
+    break
+  fi
+  if [ -z "$optmode" ]; then
+    if   [ "_$arg" =  '_-r'        ]; then
+      mode='r'
+      label=''
+    elif [ "_$arg" != "_${arg#-l}" ]; then
+      mode='l'
+      label=${arg#-l}
+      [ -z "$label" ] && optmode='l'
+    elif [ "_$arg" != "_${arg#-h}" ]; then
+      mode='h'
+      label=${arg#-h}
+      [ -z "$label" ] && optmode='h'
+    elif [ "_$arg" != "_${arg#-d}" ]; then
+      asnull=${arg#-d}
+    elif [ $i -eq $(($#-1)) ]; then
+      file_tmpl=$arg; continue;
+    else
+      print_usage_and_exit
+    fi
+  elif [ \( "$optmode" = 'l' \) -o \( "$optmode" = 'h' \) ]; then
+    label=$arg
+    optmode=''
+  else
+    print_usage_and_exit
+  fi
+done
+
+# validate the arguments
+[ \( "$mode" = 'l' \) -a \( -z "$label" \) ] && print_usage_and_exit
+[ \( "$mode" = 'h' \) -a \( -z "$label" \) ] && print_usage_and_exit
+[ -n "$file_tmpl"                          ] || print_usage_and_exit
+[ -n "$file_data"                          ] || file_data='-'
+use_stdin=0
+for file in "$file_tmpl" "$file_data"; do
+  if [ \( "_$file" = '_-'               \) -o \
+       \( "_$file" = '_/dev/stdin'      \) -o \
+       \( "_$file" = '_/dev/fd/0'       \) -o \
+       \( "_$file" = '_/proc/self/fd/0' \)    ]
+  then
+    use_stdin=$((use_stdin+1))
+  fi
+done
+[ $use_stdin -le 1 ] || print_usage_and_exit
+if [ \( ! -r "$file_tmpl" \) -a \( "_$file_tmpl" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the template file" 1>&2
+  exit 1
+fi
+if [ \( ! -r "$file_data" \) -a \( "_$file_data" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the data file" 1>&2
+  exit 1
+fi
+
+# main
+case $mode in
+  p) exec "${0}-p" "-d$asnull" "$file_tmpl" "$file_data";;
+  r) exec "${0}-l" "-d$asnull" "$file_tmpl" "$file_data";;
+  l) exec "${0}-l" "-l$label" "-d$asnull" "$file_tmpl" "$file_data";;
+  h) exec "${0}-h" "-h$label" "-d$asnull" "$file_tmpl" "$file_data";;
+esac

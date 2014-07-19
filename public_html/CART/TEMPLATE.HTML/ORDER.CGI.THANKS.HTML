@@ -1,0 +1,28 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+
+<haed>
+<!-- ■１．ヘッダー内
+           ・文字エンコードはUTF-8に設定すること(必須)
+-->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<title>注文受付 ― 受付完了</title>
+<script type="text/javascript" src="../HTML/JS/CLIENTBASE.JS"></script>
+<style type="text/css">
+</style>
+</haed>
+
+<body>
+  <p>ご注文を承りました。</p>
+  <p>お支払い方法につきましてメールにてご案内しましたので、注文時にご入力いただいたメールアドレスをご確認ください。</p>
+  <p>数時間経っても届かない場合は、お手数ですが下記の情報を<a mailto="shellshoccar-jpn@example.org">シェルショッカー日本支部 shellshoccar-jpn@example.org</a>へご連絡ください。</p>
+  <dl>
+    <li>注文日時：###DATEANDTIME###</li>
+    <li>注文ID　：###ORDERID###</li>
+  </dl>
+  <p><input type="button" name="back" value="商品ページに戻る" onclick="goback_from_cashier();" /><input type="hidden" name="referrer" id="referrer" value="###referrer###" /></p>
+</body>
+
+</html>

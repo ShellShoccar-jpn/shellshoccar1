@@ -1,0 +1,43 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+	Usage   : ${0##*/} <n1> <n2> ...
+	Version : Fri Jun 27 01:20:04 JST 2014
+	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+
+
+# initialize
+PATH='/usr/bin:/bin'
+
+# parse arguments
+if [ $# -eq 0 ]; then
+  print_usage_and_exit
+fi
+formula=''
+for arg in "$@"; do
+  if echo "_$arg" | grep -E '^_-?([0-9]+|[0-9]*\.[0-9]*)$' > /dev/null
+  then
+    formula="$formula + $arg"
+  else
+    print_usage_and_exit
+  fi
+done
+
+# plus
+result=$(echo "${formula# + }" | bc | tr -d '\\\n')
+if [ "${result#.}" != "$result" ]; then
+  echo "0$result"
+elif [ "${result#-.}" != "$result" ]; then
+  echo "-0${result#-}"
+else
+  echo $result
+fi
+exit 0

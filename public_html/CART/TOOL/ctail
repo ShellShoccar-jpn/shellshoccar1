@@ -1,0 +1,101 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+	Usage   : ${0##*/} -<n> <file>
+	          ${0##*/} <n> <file>
+	          ${0##*/} -<n>c <file>
+	Version : Sun Jun 29 14:55:00 JST 2014
+	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+# the alternative of the mktemp command
+which mktemp >/dev/null 2>&1 || {
+  mktemp_fileno=0
+  mktemp() {
+    local mktemp_filename
+    mktemp_filename="/tmp/${0##*/}.$$.$mktemp_fileno"
+    mktemp_fileno=$((mktemp_fileno+1))
+    touch "$mktemp_filename"
+    chmod 600 "$mktemp_filename"
+    echo "$mktemp_filename"
+  }
+}
+
+
+# initialize
+PATH='/usr/bin:/bin'
+copt=0
+n=0
+file=''
+use_stdin=0
+
+# parse arguments and count lines
+[ $# -gt 0 ] || print_usage_and_exit
+if   echo "_$1" | grep '^_-[0-9]\{1,\}$'  >/dev/null; then
+  n=${1#-}
+  shift
+elif echo "_$1" | grep '^_[0-9]\{1,\}$'   >/dev/null; then
+  n=$1
+  shift
+elif echo "_$1" | grep '^_-[0-9]\{1,\}c$' >/dev/null; then
+  n=${1#-}; n=${n%c}
+  copt=1
+  shift
+else
+  print_usage_and_exit
+fi
+if   [ $# -eq 0 ]; then
+  file='-'
+elif [ $# -eq 1 ]; then
+  file=$1
+else
+  print_usage_and_exit
+fi
+
+# Is the file a normal file?
+is_normalfile=0
+if   [ -f "$file"                         ]; then
+  is_normalfile=1
+elif [ "_$file" = '_-'                    ]; then
+  is_normalfile=0
+elif [ \( -c "$arg" \) -o \( -p "$arg" \) ]; then
+  is_normalfile=0
+else
+  echo "${0##*/}: Invalid file" 1>&2
+  exit 1
+fi
+if [ $is_normalfile -eq 0 ]; then
+  tmpfile=$(mktemp -t "${0##*/}.XXXXXXXX")
+  if [ $? -eq 0 ]; then
+    trap "rm -f $tmpfile; exit"  EXIT HUP INT QUIT PIPE ALRM TERM
+  else
+    echo "${0##*/}: Cannot create a temporary file" 1>&2
+    exit 1
+  fi
+  cat "$file" > $tmpfile
+  file=$tmpfile
+fi
+
+# count and cut the tail
+if [ $copt -eq 0 ]; then
+  lines=$(sed -n '$=' < "$file")
+  [ -z $lines ] && lines=0
+  if [ $lines -le $n ]; then
+    :
+  else
+    head -n $((lines-n)) "$file"
+  fi
+else
+  size=$(ls -l "$file" | awk '{print $5}')
+  if [ $size -le $n ]; then
+    :
+  else
+    head -c $((size-n)) "$file"
+  fi
+fi

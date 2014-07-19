@@ -1,0 +1,114 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+	Usage   : ${0##*/} [+count] <k1> <k2> <s1> <s2> <file>
+	Version : Fri Jun 27 01:24:27 JST 2014
+	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+
+
+# initialize
+PATH='/usr/bin:/bin'
+count=0
+file=''
+
+
+# parse the arguments
+if [ "_$1" = "_+count" ]; then
+  count=1
+  shift
+fi
+
+[ $# -lt 4 ] && print_usage_and_exit
+
+echo "_$1" | grep '^_[0-9]\{1,\}$' >/dev/null || print_usage_and_exit
+echo "_$2" | grep '^_[0-9]\{1,\}$' >/dev/null || print_usage_and_exit
+echo "_$3" | grep '^_[0-9]\{1,\}$' >/dev/null || print_usage_and_exit
+echo "_$4" | grep '^_[0-9]\{1,\}$' >/dev/null || print_usage_and_exit
+[ \( $1 -gt $2 \) ] && print_usage_and_exit
+[ \( $3 -gt $4 \) -o \( $3 -le $2 \) ] && print_usage_and_exit
+if [ $1 -gt 0 ]; then
+  keyfileds=$(awk -v s=$1 -v e=$2 'BEGIN{for(i=s;i<=e;i++){printf("$%d",i)}}' |
+              sed 's/\([0-9]\)\$/\1 FS $/g'                                   )
+elif [ $2 -eq 0 ]; then
+  keyfileds='""'
+else
+  print_usage_and_exit
+fi
+
+if [ $# -eq 4 ]; then
+  file='-'
+elif [ $# -eq 5 ]; then
+  if [ \( -f "$5" \) -o \( -c "$5" \) -o \( -p "$5" \) -o \
+       \( "_$5" = '_-' \)                                 ]; then
+    file=$5
+  else
+    print_usage_and_exit
+  fi
+fi
+if [ \( ! -r "$file" \) -a \( "_$file" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the file" 1>&2
+  exit 1
+fi
+
+
+# sum-up
+exec awk -F ' ' -v s=$3 -v e=$4 -v addcountfield=$count '
+BEGIN {
+  key0 = "";
+  _assert_exit = 0;
+  ORS="";
+}
+
+{
+  if (NF < e) {
+    printf("'"${0##*/}"': There is a record which does not have enough number of fields!\n") > "/dev/stderr";
+    _assert_exit = 1;
+    exit _assert_exit;
+  }
+  key = "_" '"$keyfileds"';
+  if (key == key0) {
+    for (i = s; i <= e; i++) {
+      sum[i] += $i;
+    }
+    samekeylines++;
+  } else {
+    if (NR > 1) {
+      print_smrecord();
+    }
+    for (i = s; i <= e; i++) {
+      sum[i] = $i;
+    }
+    samekeylines = 1;
+    key0 = key;
+    key0_for_print = '"$keyfileds"';
+  }
+}
+
+END {
+  if (_assert_exit) {
+    exit _assert_exit;
+  }
+  print_smrecord();
+}
+
+function print_smrecord() {
+  printf("%s",key0_for_print);
+  dlm = (key == "_") ? "" : " ";
+  if (addcountfield) {
+    printf("%s%d", dlm, samekeylines);
+    dlm = " ";
+  }
+  for (i = s; i <= e; i++) {
+    print dlm sum[i];
+    dlm = " ";
+  }
+  printf("\n");
+}' "$file"

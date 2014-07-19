@@ -1,0 +1,69 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+	Usage   : ${0##*/} [+ng] <k1> <k2> <file>
+	Version : Fri Jun 27 01:06:12 JST 2014
+	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+
+
+# initialize
+PATH='/usr/bin:/bin'
+disable_ng='#'
+file=''
+
+# parse the arguments
+[ $# -gt 0 ] || print_usage_and_exit
+if [ "_$1" = "_+ng" ]; then
+  disable_ng=''
+  shift
+fi
+[ $# -ge 2 ] || print_usage_and_exit
+echo "_$1" | grep '^_[0-9]\{1,\}$' >/dev/null || print_usage_and_exit
+stf=$1
+shift
+echo "_$1" | grep '^_[0-9]\{1,\}$' >/dev/null || print_usage_and_exit
+edf=$1
+shift
+[ $# -lt 2 ] || print_usage_and_exit
+if [ $# -eq 1 ]; then
+  file=$1
+else
+  file='-'
+fi
+
+# validate the file arguments
+if [ $stf -gt $edf ]; then
+  echo "${0##*/}: <k2> must be grater than <k1> or equal" 1>&2
+  exit 1
+fi
+if [ \( ! -r "$file" \) -a \( "_$file" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the file" 1>&2
+  exit 1
+fi
+
+# main
+exec awk -v stf=$stf -v edf=$edf '
+BEGIN {
+  key0 = FS;    # key of previous line
+}
+{
+  key = "";
+  for (i=stf; i<=edf; i++) {
+    key = key FS $i;
+  }
+  if (key != key0) {
+    print $0;
+  '$disable_ng'} else {
+  '$disable_ng'  print $0 > "/dev/stderr";
+  }
+  key0 = key;
+}
+' "$file"

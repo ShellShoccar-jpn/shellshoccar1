@@ -1,0 +1,157 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+		Usage   : ${0##*/} [-l<label>] [-d[<string>]] <template> <data>
+		Version : Sat Jun 28 14:07:26 JST 2014
+		        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+# decide whether to use the alternative length of AWK or not
+if awk 'BEGIN{a[1]=1;b=length(a)}' 2>/dev/null; then
+  arlen='length'
+else
+  arlen='arlen'
+fi
+
+# Initialize
+PATH='/usr/bin:/bin'
+
+# parse the arguments
+label=''
+asnull='@'
+file_tmpl=''
+file_data=''
+optmode=''
+i=0
+for arg in "$@"; do
+  i=$((i+1))
+  if [ $i -eq $# ]; then
+    [ -z "$optmode" ] || print_usage_and_exit
+    if [ -n "$file_tmpl" ]; then
+      file_data=$arg
+    else
+      file_tmpl=$arg
+    fi
+    break
+  fi
+  if [ -z "$optmode" ]; then
+    if   [ "_$arg" != "_${arg#-l}" ]; then
+      label=${arg#-l}
+      [ -z "$label" ] && optmode='l'
+    elif [ "_$arg" != "_${arg#-d}" ]; then
+      asnull=${arg#-d}
+    elif [ $i -eq $(($#-1)) ]; then
+      file_tmpl=$arg; continue;
+    else
+      print_usage_and_exit
+    fi
+  elif [ "$optmode" = 'l' ]; then
+    label=$arg
+    optmode=''
+  else
+    print_usage_and_exit
+  fi
+done
+
+# validate the arguments
+[ -n "$file_tmpl" ] || print_usage_and_exit
+[ -n "$file_data" ] || file_data='-'
+use_stdin=0
+for file in "$file_tmpl" "$file_data"; do
+  if [ \( "_$file" = '_-'               \) -o \
+       \( "_$file" = '_/dev/stdin'      \) -o \
+       \( "_$file" = '_/dev/fd/0'       \) -o \
+       \( "_$file" = '_/proc/self/fd/0' \)    ]
+  then
+    use_stdin=$((use_stdin+1))
+  fi
+done
+[ $use_stdin -le 1 ] || print_usage_and_exit
+if [ \( ! -r "$file_tmpl" \) -a \( "_$file_tmpl" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the template file" 1>&2
+  exit 1
+fi
+if [ \( ! -r "$file_data" \) -a \( "_$file_data" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the data file" 1>&2
+  exit 1
+fi
+
+# main
+export v1=$file_tmpl
+export v2=$label
+export v3=$asnull
+exec awk '
+# the alternative length function for array variable
+function arlen(ar,i,l){for(i in ar){l++;}return l;}
+
+BEGIN {
+  # ===== Initalize ==================================================
+  #
+  OFS="";
+  ORS="";
+  TAB = sprintf("\t");
+  LF  = sprintf("\n");
+  file_tmpl = (ENVIRON["v1"]!="-") ? ENVIRON["v1"] : "/dev/stdin";
+  label     = ENVIRON["v2"];
+  asnull    = ENVIRON["v3"];
+  split("", line_buf);
+
+  # ===== Pass through the lines until the line contains the 1st label
+  #
+  if (label != "") {
+    while (getline line < file_tmpl) {
+      if (index(line, label)) {break;}
+      print line, LF;
+    }
+  }
+
+  # ===== mojihame until the line contains the 2nd label =============
+  #
+  # --- 1) memorize the template lines between the labels ------------
+  for (i=0; (getline line < file_tmpl); i++) {
+    if ((label!="") && index(line, label)) {break;}
+    line_buf[i] = line;
+  }
+  #
+  # --- 2) mojihame every line in data to the memorized template -----
+  while (getline) {
+    split("", data_buf);
+    for (i=1; i<=NF; i++) {
+      s = $i;
+      if (s == asnull) {
+        s = "";
+      } else {
+        gsub(/\\_/, TAB, s);
+        gsub(/_/  , " ", s);
+        gsub(/\t/ , "_", s);
+      }
+      data_buf[i] = s;
+    }
+    for (i=0; i<'$arlen'(line_buf); i++) {
+      #
+      # --- scan the all of "%n" in a line
+      line = line_buf[i];
+      while (match(line,/%[0-9]+/)) {
+        print substr(line, 1, RSTART-1);
+        fieldnum = substr(line, RSTART+1, RLENGTH-1);
+        print (fieldnum in data_buf) ? data_buf[fieldnum] : "%" fieldnum;
+        line = substr(line, RSTART+RLENGTH);
+      }
+      print line, LF;
+    }
+  }
+
+  # ===== Pass through the lines again ===============================
+  #
+  while (getline line < file_tmpl) {
+    print line, LF;
+  }
+
+}
+' "$file_data"

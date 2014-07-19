@@ -1,0 +1,90 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+	Usage   : ${0##*/} [-d[<string>]] <file>
+	Version : Fri Jun 27 03:09:40 JST 2014
+	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+
+# initialize
+PATH='/usr/bin:/bin'
+dummy_fldstr=''
+file=''
+
+# parse the arguments
+case "$1" in
+  -d*)
+    dummy_fldstr=${1#-d}
+    if [ "_$dummy_fldstr" = '_' ]; then
+      dummy_fldstr='*'
+    fi
+    shift
+    ;;
+esac
+if [ \( -f "$1" \) -o \( -c "$1" \) -o \( -p "$1" \) -o \
+     \( "_$1" = '_-' \)                                 ]; then
+  file="$1"
+elif [ $# -lt 1 ]; then
+  file='-'
+else
+  print_usage_and_exit
+fi
+if [ \( ! -r "$file" \) -a \( "_$file" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the file" 1>&2
+  exit 1
+fi
+
+# transpose the table
+export v1=$dummy_fldstr
+exec awk '
+BEGIN {
+  max_nf = 0;
+  dummy_fldstr = ENVIRON["v1"];
+  _assert_exit = 0;
+}
+
+{
+  if (NF > max_nf) {
+    if ((NR > 1) && (length(dummy_fldstr) == 0)) {
+      print "'"${0##*/}"': There is a line which has a differnt number of fields." > "/dev/stderr";
+      _assert_exit = 1;
+      exit _assert_exit;
+    }
+    for (i = max_nf + 1; i <= NF; i++) {
+      tred_line[i] = "";
+      for (j = 1; j < NR; j++) {
+        tred_line[i] = tred_line[i] dummy_fldstr FS;
+      }
+    }
+    max_nf = NF;
+  }
+  for (i = 1; i <= NF; i++) {
+    tred_line[i] = tred_line[i] $i FS;
+  }
+  if (NF < max_nf) {
+    if (length(dummy_fldstr) == 0) {
+      print "'"${0##*/}"': There is a line which has a differnt number of fields." > "/dev/stderr";
+      _assert_exit = 1;
+      exit _assert_exit;
+    }
+    for (i = NF + 1; i <= max_nf; i++) {
+      tred_line[i] = tred_line[i] dummy_fldstr FS;
+    }
+  }
+}
+END {
+  if (_assert_exit) {
+    exit _assert_exit;
+  }
+  for (i = 1; i <= max_nf; i++) {
+    print substr(tred_line[i], 1, length(tred_line[i]) - length(FS));
+  }
+}
+' "$file"

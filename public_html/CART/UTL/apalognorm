@@ -1,0 +1,93 @@
+#! /bin/sh
+
+######################################################################
+#
+# APALOGNORM : a normalizer for logs of the Apache combined format
+#
+# Written by Rich Mikan (richmikan[at]richlab.org) at 2013/11/03
+#
+# Usage  : apalognorm [-s string] <logfile>
+#          <logfile> should be written with Apache combine format.
+#          -s  Set the substitute string you want to convert from
+#              the space character. (default is "_")
+#
+# * This is a filter convert every space character to the other one.
+#   It is very useful from the various Unix command to treat.
+# * e.g. the following command give you the referer field.
+#   $ apalognorm http-access.log | awk '{print $8}'
+#
+######################################################################
+
+# definition: print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+	Usage   : ${0##*/} [-s string] <logfile>
+	          <logfile> should be written with Apache combine format.
+	          -s  Set the alternative character you want convert from
+	              the space character. (default is "_")
+	Version : Mon Nov 04 01:43:19 JST 2013
+__USAGE
+  exit 1
+}
+
+# parse the arguments
+[ $# -ge 1 ] || print_usage_and_exit
+s_opt='_'
+file=''
+i=0
+optmode=''
+for arg in "$@"; do
+  i=$((i+1))
+  if [ -z "$optmode" ]; then
+    case "$arg" in
+      -s*)
+        ret=$(echo "_${arg#-s}" | sed '1s/^_//')
+        if [ -n "$ret" ]; then
+          s_opt=$ret
+        else
+          optmode='s'
+        fi
+        ;;
+      *)
+        if [ -z "$file" ]; then
+          [ $i -eq $# ] || print_usage_and_exit
+          file=$arg
+        else
+          print_usage_and_exit
+        fi
+        ;;
+    esac
+  elif [ "$optmode" = 's' ]; then
+    s_opt=$arg
+    optmode=''
+  else
+    print_usage_and_exit
+  fi
+done
+if [ \( ! -f "$file" \) -a \
+     \( ! -c "$file" \) -a \
+     \( ! -p "$file" \) -a \
+     \( ! -z "$file" \)    ]; then
+  echo "${0##*/}: No such file found" 1>&2
+  print_usage_and_exit
+elif [ -z "$file" ]; then
+  file='-'
+fi
+
+
+# convert the substitute string for setting to the sed command
+sub=$(echo "_$s_opt"           |
+      sed '1s/^_//'            |
+      sed 's/\([\&/]\)/\\\1/g' )
+
+# Define some marks for converting
+RS=$(printf '\036')             # a mark for the real new lines
+LF=$(printf '\\\n_');LF=${LF%_} # LF for the sed command
+
+# Convert the file
+sed 's/^\(.*\)$/\1'"$RS"'/' "$file"            |
+sed 's/ "\([^"]*\)" / '"$LF"'"\1"'"$LF"' /g'   |
+sed 's/ \[\([^]]*\)\] / '"$LF"'[\1]'"$LF"' /g' |
+sed '/^["[]/s/[[:blank:]]/'"$sub"'/g'          |
+tr -d '\n'                                     |
+tr "$RS" '\n'

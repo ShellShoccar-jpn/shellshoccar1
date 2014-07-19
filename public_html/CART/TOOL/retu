@@ -1,0 +1,77 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+	Usage   : ${0##*/} [-f] <file> ...
+	Version : Fri Apr 11 12:32:45 JST 2014
+	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+
+
+# initialize
+PATH='/usr/bin:/bin'
+foption=0
+file=''
+use_stdin=0
+
+
+
+awkcode_main='
+BEGIN {
+  last_nf = 0;
+}
+
+{
+  if (NF != last_nf) {
+    if (length(filename) > 0) {
+      printf("%s %d\n", filename, NF);
+    } else {
+      print NF;
+    }
+  }
+  last_nf = NF;
+}
+'
+
+# parse arguments and count lines
+i=0
+for arg in "$@"; do
+  i=$((i+1))
+  if [ \( $i -eq 1 \) -a \( "_$arg" = '_-f' \) ]; then
+    foption=1
+    continue
+  elif [ \( "_$arg" = '_-'               \) -o \
+         \( "_$arg" = '_/dev/stdin'      \) -o \
+         \( "_$arg" = '_/dev/fd/0'       \) -o \
+         \( "_$arg" = '_/proc/self/fd/0' \)    ]
+  then
+    [ $use_stdin -ne 0 ] && print_usage_and_exit
+    use_stdin=1
+    file=$arg
+  elif [ \( -f "$arg" \) -o \( -c "$arg" \) -o \( -p "$arg" \) ]; then
+    file=$arg
+  else
+    print_usage_and_exit
+  fi
+  if [ \( ! -r "$file" \) -a \( "_$file" != '_-' \) ]; then
+    echo "${0##*/}: Cannot open the file \"$arg\"" 1>&2
+    exit 1
+  fi
+  if [ $foption -ne 0 ]; then
+    filename=$arg
+  else
+    filename=''
+  fi
+  awk -v "filename=$filename" "$awkcode_main" "$file"
+done
+if [ \( -z "$file" \) -a \( $foption -ne 0 \) ]; then
+  awk -v 'filename=-' "$awkcode_main"
+elif [ \( -z "$file" \) -a \( $foption -eq 0 \) ]; then
+  awk -v 'filename=' "$awkcode_main"
+fi

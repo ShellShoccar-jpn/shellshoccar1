@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+
+<haed>
+<!-- ■１．ヘッダー内
+           ・文字エンコードはUTF-8に設定すること(必須)
+           ・JavaScript "CLIENTBASE.JS" を読み込むこと(必須)
+           ・###WARNING1-IDs###と###WARNING2-IDs###を受け取るスタイルシートを直書きする
+             (入力エラーの<input>フォームに色づけするためのもの)
+-->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<title>お客様情報の入力 ― 入力フォーム</title>
+<script type="text/javascript" src="../HTML/JS/CLIENTBASE.JS"></script>
+<style type="text/css">
+###WARNING1-IDs### {
+	background-color: #FDD;
+	border : 3px outset #F44;
+}
+###WARNING2-IDs### {
+	background-color: #FDD;
+	outline : 1px outset #F44;
+}
+</style>
+</haed>
+
+<!-- ■２．bodyタグ
+           ・onload="get_receipt_html_parts(document.getElementById('receipt_tbl'),true);"を付けること
+             - ページ読み込み後にカゴの中身に基づく会計が表示される。
+             - 第二引数は数量変更コントロールを付けるか付けないかであり、付ける場合はこのフォームのテンプレートが使われる。
+           ・onunload=""を付けること
+             - 戻るボタンでこのページに戻ってきた場合に、
+               きちんと更新されるようにするため。
+-->
+<body style="width:960px" onload="get_receipt_html_parts(document.getElementById('receipt_tbl'),true);" onunload="">
+
+<!-- ■３．入力欄のHTMLテンプレの書き方
+           ・formタグに onsubmit="cancel_onbeforeunload_event();" を付けること。
+             これにより、商品ページとレジページのOriginが異なる場合の移動で必要でない場合に警告が発せられるのを抑止できる。
+           ・同様に、戻るボタンのonclickにも最初にcancel_onbeforeunload_event();を呼び出すようにしておくこと。
+           ・冒頭に＜！－－ ###ERROR-STATUS### －－＞（実際は全て半角文字）を置くと、
+             入力内容に問題がある場合のみエラーメッセージ表示される。
+           ・各<input><select>タグには次の属性を持たせる(ただしXXXは項目名、YYYはその中の選択肢名)
+             (a.共通)
+               - name : "inqXXX"を値とする
+               - id   : "inqXXX"を値とする
+               - title: "###inqXXX_title###"を値とする
+             (b.type="text"のものの場合は上記aに加えて)
+               - id   : "inqXXX"を値とする
+               - value: "###inqXXX###"を値とする
+             (c.type="radio"のものの場合は上記aに加えて)
+               - id   : "inqXXX_YYY"を値とする
+               - ###inqReceipt_YYY_chk### : タグ内に与えるとチェック状態の時にchecked="checked"に変わる
+             (d.type="checkbox"のものの場合は上記aに加えて)
+               - id   : "inqXXX"を値とする
+               - ###inqReceipt_chk### : タグ内に与えるとチェック状態の時にchecked="checked"に変わる
+             (e.<select>の場合は上記aに加えて)
+               - id   : "inqXXX"を値とする
+               - ###inqXXX_YYY_sel### : <option>タグに与えると選択状態の<option>タグ内のものがselected="selected"に変わる
+           ・ちょっと便利なボタン解説
+              - referrerというCGI変数を用意し、戻るボタンにonclick="goback_from_cashier();"を仕込んでおくと、
+                レジに来る前の商品ページまで戻すことができる。
+-->
+<p>
+<form action="CASHIER.CGI" method="post" onsubmit="cancel_onbeforeunload_event();" style="width:530px; border: 1px solid; padding: 5px;float:left;">
+<!-- ###ERROR-STATUS### -->
+<table border="1" cellpadding="3" cellspacing="0">
+<caption>購入者情報記入欄</caption>
+<tr>
+  <td rowspan="5" valign="center">必<br />須</td>
+  <td>お名前（姓・名）</td>
+  <td><input type="text" name="inqNameFam" value="###inqNameFam###" title="###inqName_title###" id="inqNameFam" style="width:10em" /><input type="text" name="inqNameGiv" value="###inqNameGiv###" title="###inqName_title###" id="inqNameGiv" style="width:10em" /></td>
+</tr>
+<tr>
+  <td>ふりがな（姓・名）</td>
+  <td><input type="text" name="inqKanaFam" value="###inqKanaFam###" title="###inqKana_title###" id="inqKanaFam" style="width:10em" /><input type="text" name="inqKanaGiv" value="###inqKanaGiv###" title="###inqKana_title###" id="inqKanaGiv" style="width:10em" /></td>
+</tr>
+<tr>
+  <td>メールアドレス</td>
+  <td><input type="text" name="inqEmail" value="###inqEmail###" title="###inqEmail_title###" id="inqEmail" style="width:20em; ime-mode:disabled" /></td>
+</tr>
+<tr>
+  <td>メールアドレス(確認)</td>
+  <td><input type="text" name="inqEmail2" value="###inqEmail2###" title="###inqEmail2_title###" id="inqEmail2" style="width:20em; ime-mode:disabled" oncopy="return false" onpaste="return false" oncontextmenu="return false" /></td>
+</tr>
+<tr>
+  <td>決済手段</td>
+  <td><input type="radio" name="inqPayment" title="###inqPayment_title###" id="inqPayment_PP" value="PayPal" ###inqPayment_PP_chk### /><label for="inqPayment_PP" title="###inqPayment_title###">クレジットカード(PayPal)</label>&nbsp;
+      <input type="radio" name="inqPayment" title="###inqPayment_title###" id="inqPayment_BK" value="bank"   ###inqPayment_BK_chk### /><label for="inqPayment_BK" title="###inqPayment_title###">銀行振込(三菱東京UFJ)</label><br />
+      <span style="font-size:small; color:gray">PayPalでの決済は、PayPalアカウント無しでもご利用可能です。</span></td>
+</tr>
+
+<tr>
+  <td rowspan="4" valign="center">物<br />販<br />時<br />必<br />須</td>
+  <td>郵便番号</td>
+  <td><input type="text" name="inqZipcode1" value="###inqZipcode1###" title="###inqZipcode_title###" id="inqZipcode1" style="width:3em; ime-mode:disabled" maxlength="3" />-<input type="text" name="inqZipcode2" value="###inqZipcode2###" title="###inqZipcode_title###" id="inqZipcode2" style="width:4em; ime-mode:disabled" maxlength="4" /> <input type="button" name="zip2addr" id="zip2addr" value="郵便番号による住所入力" onclick="zipcode_to_address();" /></td>
+</tr>
+<tr>
+  <td>ご住所</td>
+  <td>
+     都道府県:<select name="inqPref" title="###inqPref_title###" id="inqPref">
+       <option value="-" ###inqPref_def_sel###>(選択してください)</option>
+       <option ###inqPref_HKD_sel###>北海道</option>
+       <option ###inqPref_AOM_sel###>青森県</option>
+       <option ###inqPref_IWT_sel###>岩手県</option>
+       <option ###inqPref_MYG_sel###>宮城県</option>
+       <option ###inqPref_AKT_sel###>秋田県</option>
+       <option ###inqPref_YGT_sel###>山形県</option>
+       <option ###inqPref_FKS_sel###>福島県</option>
+       <option ###inqPref_IBR_sel###>茨城県</option>
+       <option ###inqPref_TCH_sel###>栃木県</option>
+       <option ###inqPref_GNM_sel###>群馬県</option>
+       <option ###inqPref_STM_sel###>埼玉県</option>
+       <option ###inqPref_CHB_sel###>千葉県</option>
+       <option ###inqPref_TKY_sel###>東京都</option>
+       <option ###inqPref_KNG_sel###>神奈川県</option>
+       <option ###inqPref_NGT_sel###>新潟県</option>
+       <option ###inqPref_TYM_sel###>富山県</option>
+       <option ###inqPref_ISH_sel###>石川県</option>
+       <option ###inqPref_FKI_sel###>福井県</option>
+       <option ###inqPref_YMN_sel###>山梨県</option>
+       <option ###inqPref_NGN_sel###>長野県</option>
+       <option ###inqPref_GFU_sel###>岐阜県</option>
+       <option ###inqPref_SHZ_sel###>静岡県</option>
+       <option ###inqPref_AIC_sel###>愛知県</option>
+       <option ###inqPref_MIE_sel###>三重県</option>
+       <option ###inqPref_SHG_sel###>滋賀県</option>
+       <option ###inqPref_KYT_sel###>京都府</option>
+       <option ###inqPref_OSK_sel###>大阪府</option>
+       <option ###inqPref_HYG_sel###>兵庫県</option>
+       <option ###inqPref_NRA_sel###>奈良県</option>
+       <option ###inqPref_WKY_sel###>和歌山県</option>
+       <option ###inqPref_TTR_sel###>鳥取県</option>
+       <option ###inqPref_SHM_sel###>島根県</option>
+       <option ###inqPref_OKY_sel###>岡山県</option>
+       <option ###inqPref_HRS_sel###>広島県</option>
+       <option ###inqPref_YGC_sel###>山口県</option>
+       <option ###inqPref_TKS_sel###>徳島県</option>
+       <option ###inqPref_KGW_sel###>香川県</option>
+       <option ###inqPref_EHM_sel###>愛媛県</option>
+       <option ###inqPref_KCH_sel###>高知県</option>
+       <option ###inqPref_FKO_sel###>福岡県</option>
+       <option ###inqPref_SGA_sel###>佐賀県</option>
+       <option ###inqPref_NGS_sel###>長崎県</option>
+       <option ###inqPref_KMM_sel###>熊本県</option>
+       <option ###inqPref_OIT_sel###>大分県</option>
+       <option ###inqPref_MYZ_sel###>宮崎県</option>
+       <option ###inqPref_KGS_sel###>鹿児島県</option>
+       <option ###inqPref_OKN_sel###>沖縄県</option>
+     </select><br />
+     市区町村:<input type="text" id="inqCity" name="inqCity" value="###inqCity###"  title="###inqCity_title###" style="width:10em" /><br />
+     町・番地:<input type="text" id="inqTown" name="inqTown" value="###inqTown###"  title="###inqTown_title###" style="width:20em" /><br />
+     アパート等:<input type="text" id="inqBuilding" name="inqBuilding" value="###inqBuilding###"  title="###inqBuilding_title###" style="width:20em" />
+   </td>
+</tr>
+<tr>
+  <td>電話番号</td>
+  <td><input type="text" name="inqPhone" value="###inqPhone###" title="###inqPhone_title###" id="inqPhone" style="width:14em; ime-mode:disabled" maxlength="13" /></td>
+</tr>
+<tr>
+  <td>送り先宛名<br />(名前と違う場合)</td>
+  <td><input type="text" name="inqRecipient" value="###inqRecipient###" title="###inqRecipient_title###" id="inqRecipient" style="width:20em" /></td>
+</tr>
+
+<tr>
+  <td rowspan="3" valign="center">任<br />意</td>
+  <td>領収書</td>
+  <td><input type="checkbox" name="inqReceipt" value="1" title="###inqReceipt_title###" id="inqReceipt" ###inqReceipt_chk### /><label for="inqReceipt" title="###inqReceipt_title###">必要</label></td>
+</tr>
+<tr>
+  <td>宛名<br />(別の場合)</td>
+  <td><input type="text" name="inqAddressee" value="###inqAddressee###" title="###inqAddressee_title###" id="inqAddressee" style="width:20em" onchange="if(this.value){document.getElementById('inqReceipt').checked=true;}" /></td>
+</tr>
+<tr>
+  <td>備考</td>
+  <td><textarea name="inqMessage" title="###inqMessage_title###" id="inqMessage" rows="5" style="width:25em">###inqMessage###</textarea></td>
+</tr>
+
+</table>
+<input type="submit" name="confirm" value="確認" />&nbsp;<input type="button" name="back" value="商品ページへ戻る" onclick="cancel_onbeforeunload_event();goback_from_cashier();" /><input type="hidden" name="referrer" id="referrer" value="###referrer###" />
+</form>
+
+<!-- ■４．カゴの中用のHTMLテンプレの書き方
+           ・<table>タグに id="receipt_tbl" を持たせる
+           ・テーブルの内側をまるごと ＜！－－ ＲＥＣＥＩＰＴ＿ＨＴＭＬ －－＞ で囲む(実際は半角文字、この文字列はコメントで囲むこと)
+           ・下記の3セクションのmojihameセクションを持たせる(この文字列はコメントで囲むこと)
+             (1)HTML_TABLE_PARTS＿ITEMS……商品行
+             (2)HTML_TABLE_PARTS＿TAX………消費税行
+             (3)HTML_TABLE_PARTS＿POSTAGE…送料行
+             (4)HTML_TABLE_PARTS＿TOTAL……合計行
+           ・これらのセクションの中に置くことができるmojihame置換マクロ文字列の意味はつぎのとおり
+             - %1…商品ID
+             - %2…商品名(リンクがある場合はURLと共に<a>タグで囲まれる)
+             - %3…商品単価(カンマ区切り済)
+             - %4…数量(*1)
+             - %5…小計(カンマ区切り済)
+           ・(*1)商品詳細画面のカゴ入れボタンと同様のフォームを置けば数量可変になる
+             <form action="dummy.cgi" class="takingform"><input type="hidden" name="pid" value="%1" /><select name="qty" onchange="change_qty(this);"><option>0</option></select></form>
+-->
+<div style="float:left;width:400px;padding:5px">
+<table border="1" cellspacing="0" cellpadding="3" id="receipt_tbl" style="display:none;">
+<!-- RECEIPT_HTML -->
+  <caption>カゴの中身</caption>
+  <tr>
+    <th>商品名/価格</th>
+    <th>数量</th>
+    <th>小計</th>
+  </tr>
+  <!-- HTML_TABLE_PARTS_ITEMS -->
+  <tr>
+    <td class="item_name_price_area"><span class="item_name"    >%2</span><br /><span class="item_price">%3円</span></td>
+    <td class="item_qty_area"       ><form action="dummy.cgi" class="takingform"><input type="hidden" name="pid" value="%1" /><select name="qty" onchange="change_qty(this);"><option>%4</option></select></form></td>
+    <td class="item_total_area"     ><span class="item_subtotal">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_ITEMS -->
+  <!-- HTML_TABLE_PARTS_TAX -->
+  <tr>
+    <td class="item_name_price_area" colspan="2"><span class="item_total"   >%2</span></td>
+    <td class="item_total_area"                 ><span class="item_subtotal">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_TAX -->
+  <!-- HTML_TABLE_PARTS_POSTAGE -->
+  <tr>
+    <td class="item_name_price_area" colspan="2"><span class="item_total"   >%2</span></td>
+    <td class="item_total_area"                 ><span class="item_subtotal">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_POSTAGE -->
+  <!-- HTML_TABLE_PARTS_TOTAL -->
+  <tr>
+    <td class="item_name_price_area" colspan="2"><span class="item_total">%2</span></td>
+    <td class="item_total_area"                 ><span class="item_total">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_TOTAL -->
+<!-- RECEIPT_HTML -->
+</table>
+</div>
+</body>
+
+</html>

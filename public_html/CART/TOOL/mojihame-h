@@ -1,0 +1,282 @@
+#! /bin/sh
+
+# designed by Nobuaki Tounaka
+# written by 321516
+
+# print the usage and exit
+print_usage_and_exit () {
+  cat <<-__USAGE 1>&2
+		Usage   : ${0##*/} -h<label> [-d[<string>]] <template> <data>
+		Version : Sat Jun 28 13:58:20 JST 2014
+		        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
+__USAGE
+  exit 1
+}
+# decide whether to use the alternative length of AWK or not
+if awk 'BEGIN{a[1]=1;b=length(a)}' 2>/dev/null; then
+  arlen='length'
+else
+  arlen='arlen'
+fi
+
+# Initialize
+PATH='/usr/bin:/bin'
+
+# parse the arguments
+label=''
+asnull='@'
+file_tmpl=''
+file_data=''
+optmode=''
+i=0
+for arg in "$@"; do
+  i=$((i+1))
+  if [ $i -eq $# ]; then
+    [ -z "$optmode" ] || print_usage_and_exit
+    if [ -n "$file_tmpl" ]; then
+      file_data=$arg
+    else
+      file_tmpl=$arg
+    fi
+    break
+  fi
+  if [ -z "$optmode" ]; then
+    if   [ "_$arg" != "_${arg#-h}" ]; then
+      label=${arg#-h}
+      [ -z "$label" ] && optmode='h'
+    elif [ "_$arg" != "_${arg#-d}" ]; then
+      asnull=${arg#-d}
+    elif [ $i -eq $(($#-1)) ]; then
+      file_tmpl=$arg; continue;
+    else
+      print_usage_and_exit
+    fi
+  elif [ "$optmode" = 'h' ]; then
+    label=$arg
+    optmode=''
+  else
+    print_usage_and_exit
+  fi
+done
+
+# validate the arguments
+[ -n "$label"     ] || print_usage_and_exit
+[ -n "$file_tmpl" ] || print_usage_and_exit
+[ -n "$file_data" ] || file_data='-'
+use_stdin=0
+for file in "$file_tmpl" "$file_data"; do
+  if [ \( "_$file" = '_-'               \) -o \
+       \( "_$file" = '_/dev/stdin'      \) -o \
+       \( "_$file" = '_/dev/fd/0'       \) -o \
+       \( "_$file" = '_/proc/self/fd/0' \)    ]
+  then
+    use_stdin=$((use_stdin+1))
+  fi
+done
+[ $use_stdin -le 1 ] || print_usage_and_exit
+if [ \( ! -r "$file_tmpl" \) -a \( "_$file_tmpl" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the template file" 1>&2
+  exit 1
+fi
+if [ \( ! -r "$file_data" \) -a \( "_$file_data" != '_-' \) ]; then
+  echo "${0##*/}: Cannot open the data file" 1>&2
+  exit 1
+fi
+
+# main
+export v1=$file_tmpl
+export v2=$label
+export v3=$asnull
+exec awk '
+# the alternative length function for array variable
+function arlen(ar,i,l){for(i in ar){l++;}return l;}
+
+BEGIN {
+  # ===== Initalize ==================================================
+  #
+  OFS="";
+  ORS="";
+  TAB = sprintf("\t");
+  LF  = sprintf("\n");
+  file_tmpl = (ENVIRON["v1"]!="-") ? ENVIRON["v1"] : "/dev/stdin";
+  label     = ENVIRON["v2"];
+  asnull    = ENVIRON["v3"];
+  split("", line_buf);
+  split("", begin_linenum);
+  split("", end_linenum  );
+  split("", maxmacronum);
+
+  # ===== Before the LABEL #1 ========================================
+  #
+  # --- read and print every line ------------------------------------
+  while (getline line < file_tmpl) {
+    if (index(line, label "-1")) {break;}
+    print line, LF;
+  }
+
+  # ===== LABEL #1 - LABEL #2 ========================================
+  #
+  # --- 1) memorize the label zone -----------------------------------
+  tmpl_read(label, file_tmpl);
+  maxdepth = '$arlen'(maxmacronum);
+  for (i=2; i<=maxdepth; i++) {
+    if (maxmacronum[i-1] > maxmacronum[i]) {
+      maxmacronum[i] = maxmacronum[i-1];
+    }
+  }
+  #
+  # --- 2) mojihame for every line of the transaction data -----------
+  split("", data_buf_even);
+  split("", data_buf_odd);
+  depth_old=0;
+  depth_new=0;
+  oddeven = 0;
+  data_file_has_no_lines = 1;
+  # print the first data-line
+  if (getline) {
+    data_file_has_no_lines = 0;
+    oddeven = 1;
+    for (i=1; i<=NF; i++) {
+      s = $i;
+      if (s == asnull) {
+        s = "";
+      } else {
+        gsub(/\\_/, TAB, s);
+        gsub(/_/  , " ", s);
+        gsub(/\t/ , "_", s);
+      }
+      data_buf_odd[i] = s;
+    }
+    mojihame_with_oddbuf(begin_linenum[1],end_linenum[maxdepth]);
+  }
+  # print the following data-lines
+  while (getline) {
+    oddeven = 1 - oddeven;
+    if (oddeven != 0) {
+      # odd case
+      split("", data_buf_odd);
+      for (i=1; i<=NF; i++) {
+        s = $i;
+        if (s == asnull) {
+          s = "";
+        } else {
+          gsub(/\\_/, TAB, s);
+          gsub(/_/  , " ", s);
+          gsub(/\t/ , "_", s);
+        }
+        data_buf_odd[i] = s;
+      }
+      for (i=1; i<=NF; i++) {if (data_buf_odd[i] != data_buf_even[i]) {break;}}
+      for (j=1; j<'$arlen'(maxmacronum); j++) {if (maxmacronum[j] >= i) {break;}}
+      changed_depth = j;
+      if (changed_depth < maxdepth) {
+        mojihame_with_evenbuf(end_linenum[maxdepth],end_linenum[changed_depth]);
+      }
+      mojihame_with_oddbuf(begin_linenum[changed_depth],end_linenum[maxdepth]);
+    } else {
+      # even case
+      split("", data_buf_even);
+      for (i=1; i<=NF; i++) {
+        s = $i;
+        if (s == asnull) {
+          s = "";
+        } else {
+          gsub(/\\_/, TAB, s);
+          gsub(/_/  , " ", s);
+          gsub(/\t/ , "_", s);
+        }
+        data_buf_even[i] = s;
+      }
+      for (i=1; i<=NF; i++) {if (data_buf_even[i] != data_buf_odd[i]) {break;}}
+      for (j=1; j<'$arlen'(maxmacronum); j++) {if (maxmacronum[j] >= i) {break;}}
+      changed_depth = j;
+      if (changed_depth < maxdepth) {
+        mojihame_with_oddbuf(end_linenum[maxdepth],end_linenum[changed_depth]);
+      }
+      mojihame_with_evenbuf(begin_linenum[changed_depth],end_linenum[maxdepth]);
+    }
+  }
+  # print data which are not printed yet
+  if (data_file_has_no_lines == 0) {
+    oddeven = 1 - oddeven;
+    if (oddeven != 0) {
+      # odd case
+      if (1 < maxdepth) {
+        mojihame_with_evenbuf(end_linenum[maxdepth],end_linenum[1]);
+      }
+    } else {
+      # even case
+      if (1 < maxdepth) {
+        mojihame_with_oddbuf(end_linenum[maxdepth],end_linenum[1]);
+      }
+    }
+  }
+
+  # ===== After the LABEL #2 =========================================
+  #
+  # --- read and print every line again ------------------------------
+  while (getline line < file_tmpl) {
+    print line, LF;
+  }
+}
+
+# ===== Read the template file =======================================
+function tmpl_read(label, file_tmpl, depth,label1,label2,n,line,macronum,i) {
+  depth  = 1;
+  label1 = label "-" depth    ;
+  label2 = label "-" (depth+1);
+  n = 1;
+  begin_linenum[1] = 1;
+  end_linenum[1]   = 1;
+  while (getline line < file_tmpl) {
+    if        (index(line, label2)) {
+      depth++;
+      begin_linenum[depth] = n;
+      label1 = label "-" depth    ;
+      label2 = label "-" (depth+1);
+    } else if (index(line, label1)) {
+      end_linenum[depth]   = n;
+      depth--;
+      label1 = label "-" depth    ;
+      label2 = label "-" (depth+1);
+      if (depth<1) {return;}
+    } else {
+      line_buf[n] = line;
+      while (match(line,/%[0-9]+/)) {
+        macronum = substr(line, RSTART+1, RLENGTH-1) * 1;
+        i = maxmacronum[depth];
+        i = (macronum > i) ? macronum : i;
+        maxmacronum[depth] = i;
+        line = substr(line, RSTART+RLENGTH);
+      }
+      n++;
+    }
+  }
+}
+
+# ===== Mojihame the field data to the template file =================
+function mojihame_with_oddbuf(start_line, after_stop_line, i,line,fieldnum) {
+  for (i=start_line; i<after_stop_line; i++) {
+    line = line_buf[i];
+    while (match(line,/%[0-9]+/)) {
+      print substr(line, 1, RSTART-1);
+      fieldnum = substr(line, RSTART+1, RLENGTH-1);
+      print (fieldnum in data_buf_odd) ? data_buf_odd[fieldnum] : "%" fieldnum;
+      line = substr(line, RSTART+RLENGTH);
+    }
+    print line, LF;
+  }
+}
+function mojihame_with_evenbuf(start_line, after_stop_line, i,line,fieldnum) {
+  for (i=start_line; i<after_stop_line; i++) {
+    line = line_buf[i];
+    while (match(line,/%[0-9]+/)) {
+      print substr(line, 1, RSTART-1);
+      fieldnum = substr(line, RSTART+1, RLENGTH-1);
+      print (fieldnum in data_buf_even) ? data_buf_even[fieldnum]: "%" fieldnum;
+      line = substr(line, RSTART+RLENGTH);
+    }
+    print line, LF;
+  }
+}
+' "$file_data"

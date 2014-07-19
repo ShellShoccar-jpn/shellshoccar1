@@ -1,0 +1,49 @@
+# システム共通定義ファイル(全シェルスクリプト共通)
+# COMMON.SHLIB
+#
+# 本システムに属するシェルスクリプトが設定を共通化しなければ
+# システムとして成り立たない設定のみをここに記す。
+#
+# * 設定を変えるとなった場合に、システムに属する全てのシェルスクリプト
+#   を書き換えないと不具合が起こるようなもののみ、ここで定義する。
+# * 単に共通化しておいた方が綺麗というものに関してはここに書かずに
+#   各シェルスクリプトの中に書くこと
+#   (Tmpディレクトリーの定義など)
+
+
+######################################################################
+# ファイル・ディレクトリー定義
+######################################################################
+
+#Homedir=                                           # このシステムのホームディレクトリ
+                                                    # (通常は各スクリプトが検出する)
+
+PATH=$Homedir/UTL:$Homedir/TOOL:$Homedir/SHELL:$PATH # 追加コマンドパス
+
+readonly Dir_LOG=$Homedir/LOG                       # ログディレクトリートップ
+readonly Dir_INPUT=$Homedir/INPUT                   # 入力データディレクトリートップ
+readonly Dir_SESSION=$Dir_INPUT/SESSION             # セッションディレクトリー
+readonly Dir_ORDER=$Dir_INPUT/ORDER                 # 注文票ディレクトリートップ
+
+readonly Dir_HTMLTMPL=$Homedir/TEMPLATE.HTML        # HTMLテンプレートディレクトリー
+readonly Dir_MAILTMPL=$Homedir/TEMPLATE.MAIL        # メールテンプレートディレクトリー
+
+readonly Dir_DATA=$Homedir/DATA                     # データディレクトリートップ
+readonly File_PRODUCTS=$Dir_DATA/PRODUCTS.TXT       # 商品情報マスター
+readonly Dir_STOCK=$Dir_DATA/STOCK                  # 在庫数ファイルディレクトリー
+readonly Dir_ORDERID=$Dir_DATA/ORDERID              # 注文番号IDディレクトリー
+
+readonly Dir_EBOOK_REG_TASK=$Homedir/EBOOK          # 電子書籍配信システムへの登録タスクファイル置き場(将来の拡張用)
+
+
+######################################################################
+# その他
+######################################################################
+
+readonly COOKIE_LIFELIMIT_MIN=1440  # Cookieの寿命(分)
+readonly SUEXEC_MODE=0              # サーバーがsuEXECで動いており、SHELLもCGIも同一ユーザーであるなら1
+                                    # * 具体的にはsuEXECでない時はhttpd(apacheやwww)と、
+                                    #   自分が共有する必要のあるファイルやディレクトリのパーミッションを
+                                    #   適宜 666、644、777などにする。
+                                    # * suEXECモードで動かすことを強く推奨!!!
+                                    #   (マルウェアに晒された場合、ログや顧客情報が暴露される可能性あり)

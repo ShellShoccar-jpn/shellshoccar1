@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+
+<haed>
+<!-- ■１．ヘッダー内
+           ・文字エンコードはUTF-8に設定すること(必須)
+           ・JavaScript "CLIENTBASE.JS" を読み込むこと(必須)
+-->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<title>お客様情報の入力 ― 入力内容の確認</title>
+<script type="text/javascript" src="../HTML/JS/CLIENTBASE.JS"></script>
+<style type="text/css">
+###WARNING1-IDs### {
+	background-color: #FDD;
+	border : 3px outset #F44;
+}
+###WARNING2-IDs### {
+	background-color: #FDD;
+	outline : 1px outset #F44;
+}
+</style>
+</haed>
+
+<body style="width:960px">
+
+<!-- ■３．入力欄のHTMLテンプレの書き方
+           ・<form>タグのactionは"ORDER.CGI"
+           ・各項目欄に表示文字列を持たせる(ただしXXXは項目名、YYYはその中の選択肢名)
+             (a)表示文字列(元がtextarea以外だった場合)
+                 - ###inqXXX### を置く
+             (b)表示文字列(元がtextareaだった場合)
+                 - ###inqXXX_br### を置く
+-->
+<p>
+<form action="ORDER.CGI" method="post" style="width:530px; border: 1px solid; padding: 5px;float:left;">
+<p>下記の内容、及び注文内容でお間違いなければ注文ボタンを押してください。</p>
+<table border="1" cellpadding="3" cellspacing="0">
+<caption>購入者情報記入欄</caption>
+<tr>
+  <td rowspan="4" valign="center">必<br />須</td>
+  <td>お名前（姓・名）</td>
+  <td>###inqNameFam### ###inqNameGiv###</td>
+</tr>
+<tr>
+  <td>ふりがな（姓・名）</td>
+  <td>###inqKanaFam### ###inqKanaGiv###</td>
+</tr>
+<tr>
+  <td>メールアドレス</td>
+  <td>###inqEmail###</td>
+</tr>
+<tr>
+  <td>決済手段</td>
+  <td>###inqPayment###</td>
+</tr>
+
+<tr>
+  <td rowspan="4" valign="center">物<br />販<br />時<br />必<br />須</td>
+  <td>郵便番号</td>
+  <td>###inqZipcode1###-###inqZipcode2###</td>
+</tr>
+<tr>
+  <td>ご住所</td>
+  <td>
+     ###inqPref######inqCity######inqTown###<br />###inqBuilding###
+   </td>
+</tr>
+<tr>
+  <td>電話番号</td>
+  <td>###inqPhone###</td>
+</tr>
+<tr>
+  <td>送り先宛名<br />(名前と違う場合)</td>
+  <td>###inqRecipient###</td>
+</tr>
+
+<tr>
+  <td rowspan="3" valign="center">任<br />意</td>
+  <td>領収書</td>
+  <td>###inqReceipt###</td>
+</tr>
+<tr>
+  <td>宛名<br />(別の場合)</td>
+  <td>###inqAddressee###</td>
+</tr>
+<tr>
+  <td>備考</td>
+  <td>###inqMessage_br###</td>
+</tr>
+
+</table>
+<input type="submit" name="confirm" value="注文" />&nbsp;<input type="button" name="back" value="入力のやり直し" onclick="history.back();" />&nbsp;<input type="button" name="back" value="商品ページへ戻る" onclick="history.back();" /><input type="hidden" name="referrer" id="referrer" value="###referrer###" />
+</form>
+
+<!-- ■４．カゴの中用のHTMLテンプレの書き方
+           ・<table>タグに id="receipt_tbl" を持たせる
+           ・テーブルの内側をまるごと ＜！－－ ＲＥＣＥＩＰＴ＿ＨＴＭＬ －－＞ で囲む(実際は半角文字、この文字列はコメントで囲むこと)
+           ・下記の4セクションのmojihameセクションを持たせる(この文字列はコメントで囲むこと)
+             (1)HTML_TABLE_PARTS＿ITEMS……商品行
+             (2)HTML_TABLE_PARTS＿TAX………消費税行
+             (3)HTML_TABLE_PARTS＿POSTAGE…送料行
+             (4)HTML_TABLE_PARTS＿TOTAL……合計行
+           ・これらのセクションの中に置くことができるmojihame置換マクロ文字列の意味はつぎのとおり
+             - %1…商品ID
+             - %2…商品名(リンクがある場合はURLと共に<a>タグで囲まれる)
+             - %3…商品単価(カンマ区切り済)
+             - %4…数量
+             - %5…小計(カンマ区切り済)
+-->
+<div style="float:left;width:400px;padding:5px">
+<table border="1" cellspacing="0" cellpadding="3" id="receipt_tbl">
+<!-- RECEIPT_HTML -->
+  <caption>カゴの中身</caption>
+  <tr>
+    <th>商品名/価格</th>
+    <th>数量</th>
+    <th>小計</th>
+  </tr>
+  <!-- HTML_TABLE_PARTS_ITEMS -->
+  <tr>
+    <td class="item_name_price_area"><span class="item_name"    >%2</span><br /><span class="item_price">%3円</span></td>
+    <td class="item_qty_area"       >%4</td>
+    <td class="item_total_area"     ><span class="item_subtotal">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_ITEMS -->
+  <!-- HTML_TABLE_PARTS_TAX -->
+  <tr>
+    <td class="item_name_price_area" colspan="2"><span class="item_total"   >%2</span></td>
+    <td class="item_total_area"                 ><span class="item_subtotal">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_TAX -->
+  <!-- HTML_TABLE_PARTS_POSTAGE -->
+  <tr>
+    <td class="item_name_price_area" colspan="2"><span class="item_total"   >%2</span></td>
+    <td class="item_total_area"                 ><span class="item_subtotal">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_POSTAGE -->
+  <!-- HTML_TABLE_PARTS_TOTAL -->
+  <tr>
+    <td class="item_name_price_area" colspan="2"><span class="item_total">%2</span></td>
+    <td class="item_total_area"                 ><span class="item_total">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_TOTAL -->
+<!-- RECEIPT_HTML -->
+</table>
+</div>
+</body>
+
+</html>

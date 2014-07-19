@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+
+<haed>
+<!-- ■１．ヘッダー内
+           ・文字エンコードはUTF-8に設定すること(必須)
+-->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<title>PayPal決済 ― 決済開始</title>
+</haed>
+
+<body style="width:960px">
+
+<!-- ■２．説明欄のHTMLテンプレの書き方
+           ・冒頭に＜！－－ ###ERROR-STATUS### －－＞（実際は全て半角文字）を置くと、
+             PayPalへの移動に問題がある場合のみエラーメッセージ表示される。
+           ・同じく冒頭に、###inqName###と>###DATEANDIME_FORMATTED###を置くと、それぞれお名前と、注文日時に置き換わる。
+           ・<form>タグのactionは"PAYPAL1.CGI"
+           ・そのフォームに持たせるinput要素は次のとおり
+             - name="dateandtime" value="###DATEANDIME###"
+             - name="id"          value="###ID###"
+             - name="gotopaypal"  value="任意のメッセージ"
+-->
+<!-- ###ERROR-STATUS### -->
+<p>###inqName### 様</p>
+
+<p>###DATEANDIME_FORMATTED###に、下記のご注文をいただきました。この内容でお間違いなければ、「クレジットカード決済へ進む」ボタンを押してください。決済サイト(PayPal)へご案内します。</p>
+<form action="PAYPAL1.CGI" method="post" style="width:530px; border: 1px solid; padding: 5px;float:left;">
+  <input type="hidden" name="dateandtime" value="###DATEANDIME###"           />
+  <input type="hidden" name="id"          value="###ID###"                   />
+  <input type="submit" name="gotopaypal"  value="クレジットカード決済へ進む" />
+</form>
+
+<!-- ■３．カゴの中用のHTMLテンプレの書き方(CASHIER.CGI.INPUT.HTMLと同じ)
+           ・[注意]get_receipt_html_parts()関数は呼び出さないこと
+           ・<table>タグに id="receipt_tbl" を持たせる
+           ・テーブルの内側をまるごと ＜！－－ ＲＥＣＥＩＰＴ＿ＨＴＭＬ －－＞ で囲む(実際は半角文字、この文字列はコメントで囲むこと)
+           ・下記の4セクション(実際は全部半角文字)のmojihameセクションを持たせる(この文字列はコメントで囲むこと)
+             (1)HTML_TABLE_PARTS＿ITEMS……商品行
+             (2)HTML_TABLE_PARTS＿TAX………送料行
+             (3)HTML_TABLE_PARTS＿POSTAGE…送料行
+             (4)HTML_TABLE_PARTS＿TOTAL……合計行
+           ・これらのセクションの中に置くことができるmojihame置換マクロ文字列の意味はつぎのとおり
+             - %1…商品ID
+             - %2…商品名(リンクがある場合はURLと共に<a>タグで囲まれる)
+             - %3…商品単価(カンマ区切り済)
+             - %4…数量
+             - %5…小計(カンマ区切り済)
+-->
+<div style="float:left;width:400px;padding:5px">
+<table border="1" cellspacing="0" cellpadding="3" id="receipt_tbl">
+<!-- RECEIPT_HTML -->
+  <caption>カゴの中身</caption>
+  <tr>
+    <th>商品名/価格</th>
+    <th>数量</th>
+    <th>小計</th>
+  </tr>
+  <!-- HTML_TABLE_PARTS_ITEMS -->
+  <tr>
+    <td class="item_name_price_area"><span class="item_name"    >%2</span><br /><span class="item_price">%3円</span></td>
+    <td class="item_qty_area"       >%4</td>
+    <td class="item_total_area"     ><span class="item_subtotal">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_ITEMS -->
+  <!-- HTML_TABLE_PARTS_TAX -->
+  <tr>
+    <td class="item_name_price_area" colspan="2"><span class="item_total"   >%2</span></td>
+    <td class="item_total_area"                 ><span class="item_subtotal">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_TAX -->
+  <!-- HTML_TABLE_PARTS_POSTAGE -->
+  <tr>
+    <td class="item_name_price_area" colspan="2"><span class="item_total"   >%2</span></td>
+    <td class="item_total_area"                 ><span class="item_subtotal">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_POSTAGE -->
+  <!-- HTML_TABLE_PARTS_TOTAL -->
+  <tr>
+    <td class="item_name_price_area" colspan="2"><span class="item_total">%2</span></td>
+    <td class="item_total_area"                 ><span class="item_total">%5円</span></td>
+  </tr>
+  <!-- HTML_TABLE_PARTS_TOTAL -->
+<!-- RECEIPT_HTML -->
+</table>
+</div>
+</body>
+
+</html>
