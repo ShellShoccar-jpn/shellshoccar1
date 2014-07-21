@@ -4,7 +4,7 @@
 #
 # ADDTOCART.AJAX.CGI
 # 商品追加プログラム
-# Written by Matsuura(richmikan@richlab.org) at 2013/11/09
+# Written by Rich Mikan(richmikan@richlab.org) at 2013/11/09
 #
 # [入力]
 #    HTTP POSTで次のCGI変数を与える
@@ -231,6 +231,9 @@ gzip                    > "$File_session"
 break; done
 # === (breakdown 区間ここまで)========================================
 
+# --- The Platform for Privacy Preferences (P3P)対応 -----------------
+p3p=$(printf "\nP3P: CP='UNI CUR OUR'")
+
 # --- Cross-Origin Resource Sharing 対応 -----------------------------
 # 環境変数HTTP_ORIGINと等しい文字列の行が ALLOWED_ORIGIN_LIST.TXT の中にあったら
 # CORSに対応した2つのHTTPヘッダーを生成する
@@ -241,7 +244,7 @@ env - sed 's/[[:blank:]]\{1,\}#.*$//'       | # コメント除去2
 grep -v '^[[:blank:]]*$'                    | # 空行除去
 awk '$1=="'"$(echo "_${HTTP_ORIGIN:-.}" | sed '1s/^_//' | tr -d '"')"'"{ret=1} END{exit 1-ret}'
 if [ $? -eq 0 ]; then
-  cors=$(printf '\nP3P: CP='"'"'UNI CUR OUR'"'"'\nAccess-Control-Allow-Origin: %s\nAccess-Control-Allow-Credentials: true' "$HTTP_ORIGIN")
+  cors=$(printf '\nAccess-Control-Allow-Origin: %s\nAccess-Control-Allow-Credentials: true' "$HTTP_ORIGIN")
 fi
 
 # --- セキュリティ向上のため,セッションIDを付け替える ----------------
@@ -262,7 +265,7 @@ fi
 
 # --- HTTPヘッダー送信 -----------------------------------------------
 cat <<-HTML_HEADER
-	Content-Type: text/plain$cors$cookie_str
+	Content-Type: text/plain$p3p$cors$cookie_str
 	Cache-Control: private, no-store, no-cache, must-revalidate
 	Pragma: no-cache
 
