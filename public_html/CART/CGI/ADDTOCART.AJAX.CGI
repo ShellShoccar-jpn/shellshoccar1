@@ -191,8 +191,7 @@ grep '^'"$reqpid"'[[:blank:]]' "$File_PRODUCTS" > /dev/null 2>&1
 [ $? -eq 0 ] || errorcode_exit 'no_such_product_found'
 
 # --- Cookieを取得 ---------------------------------------------------
-echo "_${HTTP_COOKIE:-}"         |
-sed '1s/^_//'                    |
+printf '%s' "${HTTP_COOKIE:-}"   |
 sed 's/&/%26/g'                  |
 sed 's/[;,[:blank:]]\{1,\}/\&/g' |
 sed 's/^&//; s/&$//'             |
@@ -242,7 +241,7 @@ env - sed 's/[[:blank:]]\{1,\}#.*$//'       | # コメント除去2
 grep -v '^[[:blank:]]*$'                    | # 空行除去
 awk '$1=="'"$(echo "_${HTTP_ORIGIN:-.}" | sed '1s/^_//' | tr -d '"')"'"{ret=1} END{exit 1-ret}'
 if [ $? -eq 0 ]; then
-  cors=$(printf '\nAccess-Control-Allow-Origin: %s\nAccess-Control-Allow-Credentials: true' "$HTTP_ORIGIN")
+  cors=$(printf '\nP3P: CP='"'"'UNI CUR OUR'"'"'\nAccess-Control-Allow-Origin: %s\nAccess-Control-Allow-Credentials: true' "$HTTP_ORIGIN")
 fi
 
 # --- セキュリティ向上のため,セッションIDを付け替える ----------------

@@ -186,8 +186,7 @@ grep '^variable[[:blank:]]\+\([Yy][Ee][Ss]\|[Tt][Rr][Uu][Ee]\|1\)\+$' $Tmp-cgiva
 [ $? -eq 0 ] && variable=1
 
 # --- Cookieを取得 ---------------------------------------------------
-echo "_${HTTP_COOKIE:-}"         |
-sed '1s/^_//'                    |
+printf '%s' "${HTTP_COOKIE:-}"   |
 sed 's/&/%26/g'                  |
 sed 's/[;,[:blank:]]\{1,\}/\&/g' |
 sed 's/^&//; s/&$//'             |
@@ -227,7 +226,7 @@ env - sed 's/[[:blank:]]\{1,\}#.*$//'       | # コメント除去2
 grep -v '^[[:blank:]]*$'                    | # 空行除去
 awk '$1=="'"$(echo "_${HTTP_ORIGIN:-.}" | sed '1s/^_//' | tr -d '"')"'"{ret=1} END{exit 1-ret}'
 if [ $? -eq 0 ]; then
-  cors=$(printf '\nAccess-Control-Allow-Origin: %s\nAccess-Control-Allow-Credentials: true' "$HTTP_ORIGIN")
+  cors=$(printf '\nP3P: CP='"'"'UNI CUR OUR'"'"'\nAccess-Control-Allow-Origin: %s\nAccess-Control-Allow-Credentials: true' "$HTTP_ORIGIN")
 fi
 
 # --- Cookieの寿命分だけ延長した日時を得る(dummy sessionでない場合) --

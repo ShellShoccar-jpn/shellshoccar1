@@ -141,8 +141,7 @@ __HTTP_NG
 fi
 
 # --- Cookieを取得 ---------------------------------------------------
-echo "_${HTTP_COOKIE:-}"         |
-sed '1s/^_//'                    |
+printf '%s' "${HTTP_COOKIE:-}"   |
 sed 's/&/%26/g'                  |
 sed 's/[;,[:blank:]]\{1,\}/\&/g' |
 sed 's/^&//; s/&$//'             |
