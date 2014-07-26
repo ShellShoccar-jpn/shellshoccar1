@@ -15,10 +15,10 @@
 #      そして、有効なvisitoridが来なければ新規発行してCookieで教える。
 #
 # [備考]
-#    ・これはサードパーディーCookieをSafariで回避するためのもので
+#    ・これはSafariのサードパーディーCookie遮断設定を回避するためのもので、
 #      支店サイトのWebページには、次のようなものを設置して使う。
 #      <form id="whereismycart" method="GET" action="(*)" target="ifr">
-#        <input type="hidden"  name="cookiewrite" value="cookiewritevalue" />
+#        <input type="hidden" name="whereis" value="mycart" />
 #      </form>
 #      <iframe name="ifr"></iframe>
 #      <script type="text/javascript">
