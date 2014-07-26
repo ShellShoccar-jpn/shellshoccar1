@@ -354,30 +354,31 @@ self 2 NF                    > $Tmp-ppreceipt0
 # 1:商品ID 2:商品名(mojihameエスケープ) 3:注文数
 $Homedir/SHELL/GET_STOCKQTYS.SH $(cat $Tmp-ppreceipt0 | self 1 | tr '\n' ' ') > $Tmp-ppreceipt1
 # 1:商品ID 2:在庫数(無限在庫の場合は"*")
-cat $Tmp-ppreceipt0                                                                               |
-$Homedir/SHELL/MAKE_RECEIPT.SH -d ${datetime%[0-9][0-9][0-9][0-9][0-9][0-9]}                      |
-# 1:商品ID 2:商品名(mojihameエスケープ) 3:URL 4:単価 5:注文数 6:小計                              #
-grep -iv '^TOTAL'                                                                                 |
-awk '                                                                                             #
-  BEGIN {                                                                                         #
-    while(getline < "'$Tmp-ppreceipt1'") {if($2=="*"){digital[$1]=1;}else{physical=1;}}           #
-    digital["TAX"]=1;                                                                             #
-  }                                                                                               #
-  {                                                                                               #
-    pname=$2;gsub(/_/," ",pname);gsub(/\\_/,"_",pname);gsub(/\\\\/,"\\",pname);                   #
-    if      (match($4$5,/^[0-9]+$/)) {amt=$4; qty=$5;}                                            #
-    else if (match($6,  /^[0-9]+$/)) {amt=$6; qty=1 ;}                                            #
-    else                             {amt=0 ; qty=1 ;}                                            #
-    if (amt*qty==0) {next;} # 単価または数量が0のものは明細に列挙しない                           #
-    printf("L_PAYMENTREQUEST_0_NAME%d         %s\n", NR-1, pname                               ); # 商品名
-    printf("L_PAYMENTREQUEST_0_AMT%d          %s\n", NR-1, amt                                 ); # 単価
-    printf("L_PAYMENTREQUEST_0_QTY%d          %s\n", NR-1, qty                                 ); # 数量
-    printf("L_PAYMENTREQUEST_0_ITEMCATEGORY%d %s\n", NR-1, ($1 in digital)?"Digital":"Physical"); # 電子商品か否か
-  }                                                                                               #
-  END {                                                                                           #
-    printf("REQCONFIRMSHIPPING %d\n", physical  );                                                # 住所を聞くか否か?
-    printf("NOSHIPPING         %d\n", 1-physical);                                                # 輸送不要な取引か?
-  }'                                                                                              > $Tmp-ppreceipt
+cat $Tmp-ppreceipt0                                                                              |
+$Homedir/SHELL/MAKE_RECEIPT.SH -d ${datetime%[0-9][0-9][0-9][0-9][0-9][0-9]}                     |
+# 1:商品ID 2:商品名(mojihameエスケープ) 3:URL 4:単価 5:注文数 6:小計                             #
+grep -iv '^TOTAL'                                                                                |
+awk '                                                                                            #
+  BEGIN {                                                                                        #
+    while(getline < "'$Tmp-ppreceipt1'") {if($2=="*"){digital[$1]=1;}else{physical=1;}}          #
+    digital["TAX"]=1;                                                                            #
+  }                                                                                              #
+  {                                                                                              #
+    pname=$2;gsub(/_/," ",pname);gsub(/\\_/,"_",pname);gsub(/\\\\/,"\\",pname);                  #
+    if      (match($4$5,/^[0-9]+$/)) {amt=$4; qty=$5;}                                           #
+    else if (match($6,  /^[0-9]+$/)) {amt=$6; qty=1 ;}                                           #
+    else                             {amt=0 ; qty=1 ;}                                           #
+    if (amt*qty==0) {next;} # 単価または数量が0のものは明細に列挙しない                          #
+    printf("L_PAYMENTREQUEST_0_NAME%d         %s\n", num, pname                               ); # 商品名
+    printf("L_PAYMENTREQUEST_0_AMT%d          %s\n", num, amt                                 ); # 単価
+    printf("L_PAYMENTREQUEST_0_QTY%d          %s\n", num, qty                                 ); # 数量
+    printf("L_PAYMENTREQUEST_0_ITEMCATEGORY%d %s\n", num, ($1 in digital)?"Digital":"Physical"); # 電子商品か否か
+    num++;                                                                                       #
+  }                                                                                              #
+  END {                                                                                          #
+    printf("REQCONFIRMSHIPPING %d\n", physical  );                                               # 住所を聞くか否か?
+    printf("NOSHIPPING         %d\n", 1-physical);                                               # 輸送不要な取引か?
+  }'                                                                                             > $Tmp-ppreceipt
 # 3)配送先データを作成する(配送物を含む場合は住所等を含む)
 cat $Tmp-orderfile                                                                 |
 awk '                                                                              #
