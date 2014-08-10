@@ -7,7 +7,7 @@
 print_usage_and_exit () {
   cat <<-__USAGE 1>&2
 	Usage   : ${0##*/} [-v] <name> <MIME-file>
-	Version : Sun Jul 13 03:14:41 JST 2014
+	Version : Sun Aug 10 02:43:23 JST 2014
 	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands)
 	        :   * Although GNU AWK produces better performance than the
 	        :     other AWKs
@@ -391,7 +391,25 @@ if [ -n "$ed_linenum" ]; then
   head -n $((ed_linenum-st_linenum)) > $outfile0
   ret=$?
   [ $ret -ne 0 ] && exit $ret
-  head -c $(($(wc -c $outfile0 | awk '{print $1}')-2)) $outfile0
+  # Cut 0x0D,0x0A at the end with head command which supports -c option
+  if echo | head -c >/dev/null 2>&1; then
+    if [ $(printf 1 | head -c 1 | wc -c | awk '{print $1}') -eq 1 ]; then
+      env - head -c $(ls -l $outfile0 | awk '{print $5-2}') $outfile0
+      exit $?
+    fi
+  fi
+  # Cut 0x0D,0x0A at the end without head command
+  cat $outfile0                |
+  od -A n -t o1 -v             |
+  grep '[01234567]'            |
+  sed '$s/012[[:blank:]]*$//'  |
+  grep '[01234567]'            |
+  sed '$s/015[[:blank:]]*//'   |
+  sed 's/[01234567]\{3\}/o&/g' |
+  xargs echo _______           | # _______ is for space "printf "
+  tr ' o' '\\\\'               |
+  tr -d _                      |
+  xargs -n 1 printf
   exit $?
 else
   tail -n +$st_linenum "$mime_file"
