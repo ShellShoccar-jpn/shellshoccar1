@@ -8,7 +8,7 @@ print_usage_and_exit () {
   cat <<-__USAGE 1>&2
 	Usage   : ${0##*/} [+<n>h] [-k] <f1> <f2> ... <file>
 	        : ${0##*/} -d [-k] <string>
-	Version : Sun Jul 13 03:15:28 JST 2014
+	Version : Sat Aug 16 15:47:24 JST 2014
 	        : Open usp Tukubai (POSIX.1 Bourne Shell/POSIX.1 commands/UTF-8)
 __USAGE
   exit 1
@@ -309,7 +309,7 @@ function utf8han2zen_prep() {
   h2za["\\"]="＼"; h2za["]"]="］";  h2za["^"]="＾";  h2za["_"]="＿";
   h2za["`"]="‘";  h2za["a"]="ａ";  h2za["b"]="ｂ";  h2za["c"]="ｃ";
   h2za["d"]="ｄ";  h2za["e"]="ｅ";  h2za["f"]="ｆ";  h2za["g"]="ｇ";
-  h2za["h"]="ｈ";  h2za["u"]="ｉ";  h2za["j"]="ｊ";  h2za["k"]="ｋ";
+  h2za["h"]="ｈ";  h2za["i"]="ｉ";  h2za["j"]="ｊ";  h2za["k"]="ｋ";
   h2za["l"]="ｌ";  h2za["m"]="ｍ";  h2za["n"]="ｎ";  h2za["o"]="ｏ";
   h2za["p"]="ｐ";  h2za["q"]="ｑ";  h2za["r"]="ｒ";  h2za["s"]="ｓ";
   h2za["t"]="ｔ";  h2za["u"]="ｕ";  h2za["v"]="ｖ";  h2za["w"]="ｗ";
