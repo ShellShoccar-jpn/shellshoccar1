@@ -420,7 +420,7 @@ function update_whole_product_page() {
 //   -
 function update_product_ctrl_area() {
   update_product_qtys();
-  if (document.getElementById('goto_cashier')) {
+  if (document.getElementsByName('goto_cashier').length > 0) {
     update_goto_cashier_button();
   }
 }
@@ -591,8 +591,7 @@ function update_goto_cashier_button() {
   }
 }
 function update_goto_cashier_button_callback(xhr) {
-  var i, s;         // 汎用変数
-  var eCashier;     // レジへ進むボタンエレメント
+  var le, i;        // 汎用変数
 
   // --- 2)アクセス成功で呼び出されたのでないなら即終了 --------------
   if (xhr.readyState != 4) {return;}
@@ -602,12 +601,12 @@ function update_goto_cashier_button_callback(xhr) {
     return;
   }
 
-  // --- 3)レジへ進むボタンエレメントを取得 --------------------------
-  eCashier = document.getElementById('goto_cashier');
-
-  // --- 4)商品数が1以上ならenable、0ならdisable ---------------------
-  eCashier.disabled = (xhr.responseText > 0) ? false        : true;
-  eCashier.value    = (xhr.responseText > 0) ? 'レジへ進む' : 'カゴは空です';
+  // --- 3)レジへ進むボタンエレメントを取得して書き換え --------------
+  le = document.getElementsByName('goto_cashier');
+  for (i=0; i<le.length; i++) {
+    le[i].disabled = (xhr.responseText > 0) ? false        : true;
+    le[i].value    = (xhr.responseText > 0) ? 'レジへ進む' : 'カゴは空です';
+  }
 
   // --- 99)正常終了 -------------------------------------------------
   return;
@@ -699,11 +698,13 @@ function cart_controls_concealer(bConceal) {
   }
 
   // --- 2)カゴ入れボタンの有効無効を変える --------------------------
-  e = document.getElementById('goto_cashier');
-  if (       (e != null) && (  bConceal)) {
-    e.disabled = true;
-  } else if ((e != null) && (! bConceal)) {
-    //update_goto_cashier_button();
+  le = document.getElementsByName('goto_cashier');
+  for (i=0; i<le.length; i++) {
+    if (       (le[i] != null) && (  bConceal)) {
+      le[i].disabled = true;
+    } else if ((le[i] != null) && (! bConceal)) {
+      //update_goto_cashier_button();
+    }
   }
 }
 

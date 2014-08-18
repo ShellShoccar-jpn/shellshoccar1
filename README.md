@@ -9,7 +9,7 @@
 我々が多数書き溜めた、シェルショッカーの掟をはじめとした同人誌、
 同人グッスをネット販売し、世界征服を図るというわけだ。
 
-詳しいことが知りたくば、**8/17の夏コミ3日目 き-36b** へ来て「ななかInsidePress vol.5」という本を見てみるがいい。
+詳しいことが知りたくば、「ななかInsidePress vol.5」という本を見てみるがいい。このショッピングカートが稼働している<a href="http://richlab.org/coterie/7kaip05.html">我々のサイト</a>で買えるぞ。
 →[情報1](https://sites.google.com/site/dai7sec/)、[情報2](http://richlab.org/coterie/7kaip05.html)、[Map](http://twitcmap.jp/?id=0086-3-KIh-36-b)
 
 ### 「侵略型」とはどういうことか?

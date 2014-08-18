@@ -1,0 +1,90 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja">
+
+<haed>
+<!-- ■１．ヘッダー内
+           ・文字エンコードはUTF-8に設定すること(必須)
+           ・JavaScript "CLIENTBASE.JS" を読み込むこと(必須)
+-->
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<title>商品ページ サンプル(自サイトに置く場合)</title>
+<script type="text/javascript" src="JS/CLIENTBASE.JS"></script>
+</haed>
+
+<!-- ■２．bodyタグ
+           ・onload="update_whole_product_page();"を付けること
+             - ページ読み込み後に在庫数等の情報が反映される。
+           ・onunload=""を付けること
+             - 戻るボタンでこのページに戻ってきた場合に、
+               きちんと更新されるようにするため。
+           ・よそのサイトを改造する場合は、bodyタグがいじれるとは限らないため、
+             window.addEventListener()などを使ってイベント登録する。
+-->
+<body onload="update_whole_product_page();" onunload="">
+
+<!-- ■３．レジへ進むボタン
+           ・<form>で囲み、下記の属性を持たせる
+             - action  : 行き先のCGI(CASHIER.CGIへのパスは適宜変更、Cookieの中身は別ドメインでも
+                         JavaScriptによって送られるので、httpsのサイトに飛ばすことを強く推奨)
+             - method  : "post"にすること
+             - onsubmit: "create_visitorid_input(this);"にすること。(行き先がhttpsで別ドメインの場合等に必須)
+           ・<input>ボタンを作り、次の属性を持たせる
+             - name    : "goto_cashier"にすること
+             - value   : "カゴは空です"にすること(カゴに品物が入るとJavaScriptが適宜書き換える)
+             - disabled: "disabled"にすること(カゴに品物が入るとJavaScriptが解除する)
+-->
+<form action="../CGI/CASHIER.CGI" method="post" onsubmit="create_visitorid_input(this);">
+  <input type="submit" name="goto_cashier" value="カゴは空です" id="goto_cashier" disabled="disabled" />
+</form>
+
+<p>
+<!-- ■４．一つの商品に対し1つの<form class="takingform">を用意し、その中に次のものを用意する
+           ・<input name="pid" value="<商品ID>" />タグ(必須)
+             - そのformがどの商品IDのために存在するのか
+           ・<select name="qty" onchange="change_qty(this);">タグ(必須)
+             - その商品をいくつカゴに入れるか。
+           ・<input name="add1" onclick="add_one_to_cart(this);" />タグ(推奨)
+             - 商品をカゴに1つ追加するためのボタン
+             - 商品在庫0の時はJavaScriptが valie="在庫切れ" という表示に書き換え、押下できなくする。
+             - 逆に、在庫がある時はJavaScriptが valie="ガゴに1つ追加" という表示に書き換える。
+           ・<input onclick="del_from_cart(this);" />
+             - 商品をカゴから削除するためのボタン(任意)
+-->
+<form action="dummy.cgi" class="takingform">
+  <input type="hidden" name="pid" value="RPC" />
+  <dl>
+    <dt>恐怖シェルショッカーの掟</dt>
+    <dd>現在、カゴに<select name="qty" onchange="change_qty(this);">
+                      <option>0</option><option>1</option><option>2</option><option>3</option>
+                      <option>4</option><option>5</option><option>6</option><option>7</option>
+                      <option>8</option><option>9</option><option>10</option>
+                    </select>個入っています</dd>
+    <dd>
+      <input type="button" name="add1" value="カゴに1つ追加" onclick="add_one_to_cart(this);" />
+      <input type="button" name="del"  value="×"            onclick="del_from_cart(this);"   />
+    </dd>
+  </dl>
+</form>
+</p>
+<form action="dummy.cgi" class="takingform">
+  <input type="hidden" name="pid" value="RPC" />
+  <dl>
+    <dt>恐怖シェルショッカーの掟(上と同じもの、一つのページに同じ商品のボタンを複数設置してもよい)</dt>
+    <dd>現在、カゴに<select name="qty" onchange="change_qty(this);">
+                      <option>0</option><option>1</option><option>2</option><option>3</option>
+                      <option>4</option><option>5</option><option>6</option><option>7</option>
+                      <option>8</option><option>9</option><option>10</option>
+                    </select>個入っています</dd>
+    <dd>
+      <input type="button" name="add1" value="カゴに1つ追加" onclick="add_one_to_cart(this);" />
+      <input type="button" name="del"  value="×"            onclick="del_from_cart(this);"   />
+    </dd>
+  </dl>
+</form>
+
+
+</body>
+
+</html>
