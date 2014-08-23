@@ -10,7 +10,7 @@
 同人グッスをネット販売し、世界征服を図るというわけだ。
 
 詳しいことが知りたくば、「ななかInsidePress vol.5」という本を見てみるがいい。このショッピングカートが稼働している<a href="http://richlab.org/coterie/7kaip05.html">我々のサイト</a>で買えるぞ。
-→[情報1](https://sites.google.com/site/dai7sec/)、[情報2](http://richlab.org/coterie/7kaip05.html)、[Map](http://twitcmap.jp/?id=0086-3-KIh-36-b)
+→[情報1](https://sites.google.com/site/dai7sec/)、[情報2](http://richlab.hatenablog.com/entry/2014/08/13/020026)
 
 ### 「侵略型」とはどういうことか?
 
@@ -29,7 +29,7 @@
 という戦略をとることにした。そうやって、ただのWebページを侵略していくのだ。
 **JavaScriptが自由に組めるページならどこでも改造できる。**
 その威力を知らしめるため、手始めに「はてなブログ」を改造した。
-[我々に侵略されたはてなブログ](http://richlab.hatenablog.com/entry/2014/07/20/171019)を見てみるがいい。
+[我々に侵略されたはてなブログ](http://richlab.hatenablog.com/entry/2014/08/18/135859)を見てみるがいい。
 
 世界征服の日も近いな。わっはっは!!!
 
@@ -54,9 +54,7 @@
 
 ## 使い方
 
-同人誌が一段落したらじっくり書くぞ。
-
-まずは、コミックマーケットC86 3日目(8/17日曜日) まつらリッチ研究所(西2 き-36b)に来るべし。
+同人誌が一段落したのでこれからじっくり書くぞ。
 
 ### ディレクトリー構成
 
@@ -102,10 +100,28 @@
 
 ## ライセンスとか
 
-各地を侵略するのが目的なのでうるさいことは言わんが、
-利用しているコマンド等が制約している部分以外はパブリックドメイン相当と考えてもらって構わん。
-我々シェルショッカー日本支部がこのソフトの開発・公開を続ける権利さえ奪われなければ、
-販売に使うのはもちろん、何かに組み込もうが、改造しようが、これ自身を販売して金儲けしようが
-一向に構わん。
+我々の思想で人間どもを洗脳し、世界征服が目的であるから、このプログラムそのもので金儲けするつもりはない。
+下記の一部のファイルを除き、 **パブリックドメイン** とすることを宣言してやる。
 
+販売に使うのはもちろん、何かに組み込もうが、改造しようが、これ自身を販売して金儲けしようが
+一向に構わん。勝手にするがいい。
 しかし、その時点で既にお前たちは **我々に洗脳されたことを意味する** のだ。わっはっは!!!
+
+### パブリックドメインでないもの
+
+* TOOLの中にあるクローンコマンドのオリジナル……MITライセンス
+* UTL/SRCの中身……BSDライセンス
+
+
+## License of the software (in English)
+
+We declare that the software "ShellSocker 1" is PUBLIC DOMAIN (CC0) except the following files.
+You can use this for any purpose, of cause for saling any items.
+
+But if you did that, **you have already been brainwashed by us!**
+Ha, Ha, Ha!!!
+
+### exceptional files (NOT Public Domain)
+
+* the origin of the clone command, which are in TOOL/ (MIT License)
+* source files in UTL/SRC (BSD License)
