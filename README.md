@@ -109,7 +109,7 @@
 
 ### パブリックドメインでないもの
 
-* TOOLの中にあるクローンコマンドのオリジナル(https://uec.usp-lab.com/にあるもの)……MITライセンス
+* TOOLの中にあるクローンコマンドのオリジナル( https://uec.usp-lab.com/ にあるもの)……MITライセンス
 * UTL/SRCの中身……BSDライセンス
 
 
