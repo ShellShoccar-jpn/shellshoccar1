@@ -109,7 +109,7 @@
 
 ### パブリックドメインでないもの
 
-* TOOLの中にあるクローンコマンドのオリジナル……MITライセンス
+* TOOLの中にあるクローンコマンドのオリジナル(https://uec.usp-lab.com/にあるもの)……MITライセンス
 * UTL/SRCの中身……BSDライセンス
 
 
@@ -118,10 +118,10 @@
 We declare that the software "ShellSocker 1" is PUBLIC DOMAIN (CC0) except the following files.
 You can use this for any purpose, of cause for saling any items.
 
-But if you did that, **you have already been brainwashed by us!**
+But if you did that, **you have been already brainwashed by us!**
 Ha, Ha, Ha!!!
 
 ### exceptional files (NOT Public Domain)
 
-* the origin of the clone command, which are in TOOL/ (MIT License)
+* the origin (which are at https://uec.usp-lab.com/) of the clone commands, which are in TOOL/ (MIT License)
 * source files in UTL/SRC (BSD License)
